@@ -25,6 +25,7 @@ class gen_read_py:
 
         #tree output for true x, y and Q^2
         tlist = ["true_x", "true_y", "true_Q2", "true_W2", "true_Nu"]
+        tlist += ["true_el_pT", "true_el_theta", "true_el_phi", "true_el_E"]
         self.tree_out = self.set_tree(tree, tlist)
 
         print "gen_read_py initialized"
@@ -74,6 +75,12 @@ class gen_read_py:
             el.vec.SetPxPyPzE(px, py, pz, en)
             el.stat = 1
             el.pxyze_prec = 9
+
+            #electron kinematics directly in output tree
+            self.tree_out.true_el_pT = el.vec.Pt()
+            self.tree_out.true_el_theta = el.vec.Theta()
+            self.tree_out.true_el_phi = el.vec.Phi()
+            self.tree_out.true_el_E = el.vec.E()
 
         #print self.tree_out.true_y, self.tree_out.true_Q2, self.tree_out.true_x, self.tree_out.true_W2, self.tree_out.true_Nu
 

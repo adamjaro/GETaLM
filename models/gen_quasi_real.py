@@ -74,6 +74,23 @@ class gen_quasi_real:
         #range in y
         ymin = parse.getfloat("main", "ymin")
         ymax = parse.getfloat("main", "ymax")
+
+        #range in W
+        wmin = -1.
+        wmax = -1.
+        if parse.has_option("main", "Wmin"):
+            wmin = parse.getfloat("main", "Wmin")
+            print "Wmin =", wmin
+        if parse.has_option("main", "Wmax"):
+            wmax = parse.getfloat("main", "Wmax")
+            print "Wmax =", wmax
+
+        #adjust range in y according to W
+        if wmin > 0 and ymin < wmin**2/self.s:
+            ymin = wmin**2/self.s
+        if wmax > 0 and ymax > wmax**2/self.s:
+            ymax = wmax**2/self.s
+
         print "ymin =", ymin
         print "ymax =", ymax
 
@@ -104,8 +121,9 @@ class gen_quasi_real:
         self.rand.SetSeed(5572323)
 
         #generator event variables in output tree
-        tnam = ["gen_u", "gen_v", "true_x", "true_y", "true_Q2", "gen_theta", "gen_E", "gen_phi"]
-        tnam += ["gen_el_Q2"]
+        tnam = ["gen_u", "gen_v", "true_x", "true_y", "true_Q2", "true_W2"]
+        tnam += ["true_el_Q2"]
+        tnam += ["true_el_pT", "true_el_theta", "true_el_phi", "true_el_E"]
 
         #create the tree variables
         tcmd = "struct gen_out { Double_t "
@@ -198,14 +216,16 @@ class gen_quasi_real:
         self.out.true_x = x
         self.out.true_y = y
         self.out.true_Q2 = Q2
+        self.out.true_W2 = self.s*y
 
         #electron kinematics
-        self.out.gen_theta = el.vec.Theta()
-        self.out.gen_E = el.vec.E()
-        self.out.gen_phi = el.vec.Phi()
+        self.out.true_el_pT = el.vec.Pt()
+        self.out.true_el_theta = el.vec.Theta()
+        self.out.true_el_phi = el.vec.Phi()
+        self.out.true_el_E = el.vec.E()
 
         #Q^2 from electron energy and angle
-        self.out.gen_el_Q2 = 2.*self.Ee*el.vec.E()*(1.-TMath.Cos(TMath.Pi()-el.vec.Theta()))
+        self.out.true_el_Q2 = 2.*self.Ee*el.vec.E()*(1.-TMath.Cos(TMath.Pi()-el.vec.Theta()))
 
         #print Q2, self.out.gen_el_Q2
 
