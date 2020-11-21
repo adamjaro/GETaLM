@@ -91,7 +91,9 @@ class gen_Lifshitz_93p16:
         self.rand.SetSeed(5572323)
 
         #tree output from the generator
-        tlist = ["phot_w", "phot_delta", "phot_theta_n"]
+        tlist = ["true_phot_w", "true_phot_delta", "true_phot_theta_n"]
+        tlist += ["true_phot_theta", "true_phot_phi", "true_phot_E"]
+        tlist += ["true_el_theta", "true_el_phi", "true_el_E"]
         self.tree_out = self.set_tree(tree, tlist)
 
         print "Lifshitz_93p16 parametrization initialized"
@@ -108,9 +110,9 @@ class gen_Lifshitz_93p16:
         theta_n = d*self.me/self.Ee_n
 
         #set the tree output
-        self.tree_out.phot_w = w
-        self.tree_out.phot_delta = d
-        self.tree_out.phot_theta_n = theta_n
+        self.tree_out.true_phot_w = w
+        self.tree_out.true_phot_delta = d
+        self.tree_out.true_phot_theta_n = theta_n
 
         #uniform azimuthal angle
         phi_n = 2. * TMath.Pi() * self.rand.Rndm() #uniform azimuthal angle
@@ -133,6 +135,11 @@ class gen_Lifshitz_93p16:
         #rotate the photon for pz < 0
         phot.vec.SetPxPyPzE(phot.vec.Px(), phot.vec.Py(), -phot.vec.Pz(), phot.vec.E())
 
+        #photon kinematics in generator output
+        self.tree_out.true_phot_theta = phot.vec.Theta()
+        self.tree_out.true_phot_phi = phot.vec.Phi()
+        self.tree_out.true_phot_E = phot.vec.E()
+
         #scattered electron, initialize as beam
         electron = add_particle( beam(self.Ee, 11, -1) )
         electron.stat = 1
@@ -140,6 +147,11 @@ class gen_Lifshitz_93p16:
 
         #constrain the scattered electron with the photon
         electron.vec -= phot.vec
+
+        #electron kinematics in generator output
+        self.tree_out.true_el_theta = electron.vec.Theta()
+        self.tree_out.true_el_phi = electron.vec.Phi()
+        self.tree_out.true_el_E = electron.vec.E()
 
     #_____________________________________________________________________________
     def eq(self, x):
