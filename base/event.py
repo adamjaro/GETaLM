@@ -63,9 +63,11 @@ class event:
     #_____________________________________________________________________________
     def event_loop(self, nev):
 
+        iprint = nev/12
+
         for i in xrange(nev):
-            if i%100000 == 0:
-                print "Generating event:", i
+            if i%iprint == 0:
+                print 100*i/nev, "%"
                 stdout.flush()
             self.generate()
 
