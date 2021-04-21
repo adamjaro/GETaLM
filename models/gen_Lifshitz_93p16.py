@@ -4,6 +4,8 @@
 #
 #_____________________________________________________________________________
 
+from ctypes import c_double
+
 import ROOT as rt
 from ROOT import TRandom3, gROOT, AddressOf, TDatabasePDG, TLorentzVector
 from ROOT import TMath, TF2, Double, TRandom3, gRandom
@@ -72,7 +74,11 @@ class gen_Lifshitz_93p16:
         print "emin_n, GeV:", emin_n
 
         #maximal delta in nucleus frame
-        dmax_n = 100
+        dmax_n = 100.
+        if parse.has_option("main", "dmax_n"):
+            dmax_n = parse.getfloat("main", "dmax_n")
+
+        print "dmax_n:", dmax_n
 
         #cross section formula
         self.dSigDwDt = TF2("dSigDwDt", self.eq, emin_n, self.Ee_n, 0, dmax_n)
@@ -102,9 +108,14 @@ class gen_Lifshitz_93p16:
     def generate(self, add_particle):
 
         #photon energy and delta in nucleus rest frame
-        w = Double(0)
-        d = Double(0)
+        #w = Double(0)
+        #d = Double(0)
+        w = c_double(0)
+        d = c_double(0)
         self.dSigDwDt.GetRandom2(w, d)
+
+        w = w.value
+        d = d.value
 
         #polar angle theta
         theta_n = d*self.me/self.Ee_n

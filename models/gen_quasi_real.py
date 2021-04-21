@@ -19,6 +19,7 @@
 import math
 from math import pi
 import atexit
+from ctypes import c_double
 
 import ROOT as rt
 from ROOT import TF2, Double, TMath, TRandom3, gROOT, AddressOf, TDatabasePDG
@@ -162,9 +163,14 @@ class gen_quasi_real:
         while True:
 
             #values of u = log_10(x) and v = log_10(y) from the cross section
-            u = Double(0)
-            v = Double(0)
+            #u = Double(0)
+            #v = Double(0)
+            u = c_double(0)
+            v = c_double(0)
             self.eq.GetRandom2(u, v)
+
+            u = u.value
+            v = v.value
 
             #x and y from the transformation
             x = 10.**u
