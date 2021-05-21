@@ -1,5 +1,5 @@
 
-import ConfigParser
+import configparser
 
 import ROOT as rt
 from ROOT import TF1, gROOT, AddressOf
@@ -15,34 +15,34 @@ class beam_effects:
         if parse.has_section("beam_effects") == True:
             self.use_beam_effects = parse.getboolean("beam_effects", "use_beam_effects")
 
-        print "Beam effects configuration:"
-        print "use_beam_effects =", self.use_beam_effects
+        print("Beam effects configuration:")
+        print("use_beam_effects =", self.use_beam_effects)
 
         if self.use_beam_effects == False: return
 
         #beam size at IP in x, sigma_x in mm
         sig_x = parse.getfloat("beam_effects", "sig_x")
-        print "sig_x =", sig_x
+        print("sig_x =", sig_x)
         self.vtx_x = self.make_gaus("vtx_x", sig_x)
 
         #beam size at IP in y, sigma_y in mm
         sig_y = parse.getfloat("beam_effects", "sig_y")
-        print "sig_y =", sig_y
+        print("sig_y =", sig_y)
         self.vtx_y = self.make_gaus("vtx_y", sig_y)
 
         #bunch length along z
         sig_z = parse.getfloat("beam_effects", "sig_z")
-        print "sig_z =", sig_z
+        print("sig_z =", sig_z)
         self.vtx_z = self.make_gaus("vtx_z", sig_z)
 
         #angular divergence in x, horizontal, rad
         theta_x = parse.getfloat("beam_effects", "theta_x")
-        print "theta_x =", theta_x
+        print("theta_x =", theta_x)
         self.div_x = self.make_gaus("div_x", theta_x)
 
         #angular divergence in y, vertical, rad
         theta_y = parse.getfloat("beam_effects", "theta_y")
-        print "theta_y =", theta_y
+        print("theta_y =", theta_y)
         self.div_y = self.make_gaus("div_y", theta_y)
 
         #tree output from beam effects

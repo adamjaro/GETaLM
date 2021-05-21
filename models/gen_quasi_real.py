@@ -22,7 +22,7 @@ import atexit
 from ctypes import c_double
 
 import ROOT as rt
-from ROOT import TF2, Double, TMath, TRandom3, gROOT, AddressOf, TDatabasePDG
+from ROOT import TF2, TMath, TRandom3, gROOT, addressof, TDatabasePDG
 from ROOT import TLorentzVector
 
 from particle import particle
@@ -32,13 +32,13 @@ class gen_quasi_real:
     #_____________________________________________________________________________
     def __init__(self, parse, tree):
 
-        print "Quasi-real configuration:"
+        print("Quasi-real configuration:")
 
         #electron and proton beam energy, GeV
         self.Ee = parse.getfloat("main", "Ee")
         self.Ep = parse.getfloat("main", "Ep")
-        print "Ee =", self.Ee, "GeV"
-        print "Ep =", self.Ep, "GeV"
+        print("Ee =", self.Ee, "GeV")
+        print("Ep =", self.Ep, "GeV")
 
         #electron and proton mass
         self.me = TDatabasePDG.Instance().GetParticle(11).Mass()
@@ -57,20 +57,20 @@ class gen_quasi_real:
 
         #center-of-mass squared s, GeV^2
         self.s = self.get_s(self.Ee, self.Ep)
-        print "s =", self.s, "GeV^2"
-        print "sqrt(s) =", TMath.Sqrt(self.s), "GeV"
+        print("s =", self.s, "GeV^2")
+        print("sqrt(s) =", TMath.Sqrt(self.s), "GeV")
 
         #range in x
         xmin = parse.getfloat("main", "xmin")
         xmax = parse.getfloat("main", "xmax")
-        print "xmin =", xmin
-        print "xmax =", xmax
+        print("xmin =", xmin)
+        print("xmax =", xmax)
 
         #range in u = log_10(x)
         umin = TMath.Log10(xmin)
         umax = TMath.Log10(xmax)
-        print "umin =", umin
-        print "umax =", umax
+        print("umin =", umin)
+        print("umax =", umax)
 
         #range in y
         ymin = parse.getfloat("main", "ymin")
@@ -81,10 +81,10 @@ class gen_quasi_real:
         wmax = -1.
         if parse.has_option("main", "Wmin"):
             wmin = parse.getfloat("main", "Wmin")
-            print "Wmin =", wmin
+            print("Wmin =", wmin)
         if parse.has_option("main", "Wmax"):
             wmax = parse.getfloat("main", "Wmax")
-            print "Wmax =", wmax
+            print("Wmax =", wmax)
 
         #adjust range in y according to W
         if wmin > 0 and ymin < wmin**2/self.s:
@@ -92,27 +92,28 @@ class gen_quasi_real:
         if wmax > 0 and ymax > wmax**2/self.s:
             ymax = wmax**2/self.s
 
-        print "ymin =", ymin
-        print "ymax =", ymax
+        print("ymin =", ymin)
+        print("ymax =", ymax)
 
         #range in v = log_10(y)
         vmin = TMath.Log10(ymin)
         vmax = TMath.Log10(ymax)
-        print "vmin =", vmin
-        print "vmax =", vmax
+        print("vmin =", vmin)
+        print("vmax =", vmax)
 
         #range in Q2
         self.Q2min = parse.getfloat("main", "Q2min")
         self.Q2max = parse.getfloat("main", "Q2max")
-        print "Q2min =", self.Q2min
-        print "Q2max =", self.Q2max
+        print("Q2min =", self.Q2min)
+        print("Q2max =", self.Q2max)
 
         #constant term in the cross section
         self.const = TMath.Log(10)*TMath.Log(10)*(1./137)/(2.*math.pi)
 
         #cross section formula for d^2 sigma / dxdy, Eq. II.6
         #transformed as x -> u = log_10(x) and y -> v = log_10(y)
-        self.eq = TF2("d2SigDuDvII6", self.eq_II6_uv, umin, umax, vmin, vmax)
+        self.eq_II6_uv_par = self.eq_II6_uv(self)
+        self.eq = TF2("d2SigDuDvII6", self.eq_II6_uv_par, umin, umax, vmin, vmax)
 
         self.eq.SetNpx(1000)
         self.eq.SetNpy(1000)
@@ -141,7 +142,7 @@ class gen_quasi_real:
         #set the variables in the tree
         if tree is not None:
             for i in tnam:
-                tree.Branch(i, AddressOf(self.out, i), i+"/D")
+                tree.Branch(i, addressof(self.out, i), i+"/D")
 
         #counters for all generated and selected events
         self.nall = 0
@@ -152,9 +153,9 @@ class gen_quasi_real:
 
         #total integrated cross section
         self.sigma_tot = self.eq.Integral(umin, umax, vmin, vmax)
-        print "Total integrated cross section for a given x and y range:", self.sigma_tot, "mb"
+        print("Total integrated cross section for a given x and y range:", self.sigma_tot, "mb")
 
-        print "Quasi-real photoproduction initialized"
+        print("Quasi-real photoproduction initialized")
 
     #_____________________________________________________________________________
     def generate(self, add_particle):
@@ -163,8 +164,6 @@ class gen_quasi_real:
         while True:
 
             #values of u = log_10(x) and v = log_10(y) from the cross section
-            #u = Double(0)
-            #v = Double(0)
             u = c_double(0)
             v = c_double(0)
             self.eq.GetRandom2(u, v)
@@ -236,18 +235,21 @@ class gen_quasi_real:
         #print Q2, self.out.gen_el_Q2
 
     #_____________________________________________________________________________
-    def eq_II6_uv(self, val):
+    class eq_II6_uv:
+        def __init__(self, gen):
+            self.gen = gen
+        def __call__(self, val, *w):
 
-        #II.6 transformed as x -> u = log_10(x) and y -> v = log_10(y)
-        u = val[0]
-        v = val[1]
+            #II.6 transformed as x -> u = log_10(x) and y -> v = log_10(y)
+            u = val[0]
+            v = val[1]
 
-        sig = self.const*( 1. + (1.-10**v)**2 )*(1.-10.**u)
+            sig = self.gen.const*( 1. + (1.-10**v)**2 )*(1.-10.**u)
 
-        #term of the total gamma-p cross section by Donnachie, Landshoff, 1992
-        sig *= 0.0677*((10.**v)*self.s)**0.0808 + 0.129*((10.**v)*self.s)**-0.4525 # mb
+            #term of the total gamma-p cross section by Donnachie, Landshoff, 1992
+            sig *= 0.0677*((10.**v)*self.gen.s)**0.0808 + 0.129*((10.**v)*self.gen.s)**-0.4525 # mb
 
-        return sig
+            return sig
 
     #_____________________________________________________________________________
     def get_s(self, Ee, Ep):
@@ -269,12 +271,12 @@ class gen_quasi_real:
     def show_stat(self):
 
         #print generator statistics at the end
-        print "Total generated events:", self.nall
-        print "Selected events:", self.nsel
+        print("Total generated events:", self.nall)
+        print("Selected events:", self.nsel)
 
         if self.nall <= 0: return
 
-        print "Cross section of generated sample:", self.sigma_tot*float(self.nsel)/float(self.nall), "mb"
+        print("Cross section of generated sample:", self.sigma_tot*float(self.nsel)/float(self.nall), "mb")
 
 
 

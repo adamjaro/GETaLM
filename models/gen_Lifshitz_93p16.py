@@ -7,8 +7,8 @@
 from ctypes import c_double
 
 import ROOT as rt
-from ROOT import TRandom3, gROOT, AddressOf, TDatabasePDG, TLorentzVector
-from ROOT import TMath, TF2, Double, TRandom3, gRandom
+from ROOT import TRandom3, gROOT, addressof, TDatabasePDG, TLorentzVector
+from ROOT import TMath, TF2, TRandom3, gRandom
 
 from particle import particle
 from beam import beam
@@ -22,8 +22,8 @@ class gen_Lifshitz_93p16:
         self.Ee = parse.getfloat("main", "Ee")
         self.Ep = parse.getfloat("main", "Ep")
 
-        print "Ee, GeV =", self.Ee
-        print "Ep, GeV =", self.Ep
+        print("Ee, GeV =", self.Ee)
+        print("Ep, GeV =", self.Ep)
 
         #A and Z of the nucleus
         self.A = 1
@@ -32,12 +32,12 @@ class gen_Lifshitz_93p16:
             self.A = parse.getint("main", "A")
         if parse.has_option("main", "Z"):
             self.Z = parse.getint("main", "Z")
-        print "A:", self.A
-        print "Z:", self.Z
+        print("A:", self.A)
+        print("Z:", self.Z)
 
         #minimal photon energy, GeV
         self.emin = parse.getfloat("main", "emin")
-        print "emin, GeV =", self.emin
+        print("emin, GeV =", self.emin)
 
         #alpha r_e^2
         self.ar2 = 7.297*2.818*2.818*1e-2 # m barn
@@ -64,33 +64,34 @@ class gen_Lifshitz_93p16:
         evec.Boost(-self.nbvec.x(), -self.nbvec.y(), -self.nbvec.z())
         self.Ee_n = evec.E()
 
-        print "Ee_n, GeV:", self.Ee_n
+        print("Ee_n, GeV:", self.Ee_n)
 
         #minimal photon energy in nucleus rest frame
         eminv = TLorentzVector()
         eminv.SetPxPyPzE(0, 0, -self.emin, self.emin)
         eminv.Boost(-self.nbvec.x(), -self.nbvec.y(), -self.nbvec.z())
         emin_n = eminv.E()
-        print "emin_n, GeV:", emin_n
+        print("emin_n, GeV:", emin_n)
 
         #maximal delta in nucleus frame
         dmax_n = 100.
         if parse.has_option("main", "dmax_n"):
             dmax_n = parse.getfloat("main", "dmax_n")
 
-        print "dmax_n:", dmax_n
+        print("dmax_n:", dmax_n)
 
         #cross section formula
-        self.dSigDwDt = TF2("dSigDwDt", self.eq, emin_n, self.Ee_n, 0, dmax_n)
+        self.eqpar = self.eq(self)
+        self.dSigDwDt = TF2("dSigDwDt", self.eqpar, emin_n, self.Ee_n, 0, dmax_n)
         self.dSigDwDt.SetNpx(2000)
         self.dSigDwDt.SetNpy(2000)
         gRandom.SetSeed(5572323)
 
         #total integrated cross section over all delta (to 1e5)
-        dSigInt = TF2("dSigInt", self.eq, emin_n, self.Ee_n, 0, 1e5)
+        dSigInt = TF2("dSigInt", self.eqpar, emin_n, self.Ee_n, 0, 1e5)
         sigma_tot = dSigInt.Integral(emin_n, self.Ee_n, 0, 1e5)
 
-        print "Total cross section, mb:", sigma_tot
+        print("Total cross section, mb:", sigma_tot)
 
         #uniform generator for azimuthal angles
         self.rand = TRandom3()
@@ -102,14 +103,12 @@ class gen_Lifshitz_93p16:
         tlist += ["true_el_theta", "true_el_phi", "true_el_E"]
         self.tree_out = self.set_tree(tree, tlist)
 
-        print "Lifshitz_93p16 parametrization initialized"
+        print("Lifshitz_93p16 parametrization initialized")
 
     #_____________________________________________________________________________
     def generate(self, add_particle):
 
         #photon energy and delta in nucleus rest frame
-        #w = Double(0)
-        #d = Double(0)
         w = c_double(0)
         d = c_double(0)
         self.dSigDwDt.GetRandom2(w, d)
@@ -165,27 +164,30 @@ class gen_Lifshitz_93p16:
         self.tree_out.true_el_E = electron.vec.E()
 
     #_____________________________________________________________________________
-    def eq(self, x):
+    class eq:
+        def __init__(self, gen):
+            self.gen = gen
+        def __call__(self, x, par):
 
-        #Eq. 93.16
+            #Eq. 93.16
 
-        #photon energy and angle
-        w = x[0]
-        d = x[1]
+            #photon energy and angle
+            w = x[0]
+            d = x[1]
 
-        #initial and final electron E and E'
-        E = self.Ee_n
-        Efin = E - w
+            #initial and final electron E and E'
+            E = self.gen.Ee_n
+            Efin = E - w
 
-        t1 = 8.*self.Z*self.Z*self.ar2*(1./w)*(Efin/E)*d/((1+d**2)**2)
+            t1 = 8.*self.gen.Z*self.gen.Z*self.gen.ar2*(1./w)*(Efin/E)*d/((1+d**2)**2)
 
-        t2 = ( (E/Efin) + (Efin/E) - 4*d*d/((1+d**2)**2) )*TMath.Log(2.*E*Efin/(self.me*w))
+            t2 = ( (E/Efin) + (Efin/E) - 4*d*d/((1+d**2)**2) )*TMath.Log(2.*E*Efin/(self.gen.me*w))
 
-        t3 = 0.5*( (E/Efin) + (Efin/E) + 2 - 16*d*d/((1+d**2)**2) )
+            t3 = 0.5*( (E/Efin) + (Efin/E) + 2 - 16*d*d/((1+d**2)**2) )
 
-        sig = t1*(t2 - t3)
+            sig = t1*(t2 - t3)
 
-        return sig
+            return sig
 
     #_____________________________________________________________________________
     def set_tree(self, tree, tlist):
@@ -207,7 +209,7 @@ class gen_Lifshitz_93p16:
         #add variables to the tree
         if tree is not None:
             for i in tlist:
-                tree.Branch(i, AddressOf(tree_out, i), i+"/D")
+                tree.Branch(i, addressof(tree_out, i), i+"/D")
 
         return tree_out
 

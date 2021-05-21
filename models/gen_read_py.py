@@ -6,7 +6,7 @@
 #_____________________________________________________________________________
 
 import ROOT as rt
-from ROOT import gROOT, AddressOf
+from ROOT import gROOT, addressof
 
 from particle import particle
 
@@ -17,18 +17,18 @@ class gen_read_py:
 
         #open the input
         nam = parse.get("main", "input").strip("\"'")
-        print "Input:", nam
+        print("Input:", nam)
         self.inp = open(nam, "r")
 
         #skip the header, 6 lines
-        for i in xrange(6): self.inp.readline()
+        for i in range(6): self.inp.readline()
 
         #tree output for true x, y and Q^2
         tlist = ["true_x", "true_y", "true_Q2", "true_W2", "true_Nu"]
         tlist += ["true_el_pT", "true_el_theta", "true_el_phi", "true_el_E"]
         self.tree_out = self.set_tree(tree, tlist)
 
-        print "gen_read_py initialized"
+        print("gen_read_py initialized")
 
     #_____________________________________________________________________________
     def generate(self, add_particle):
@@ -104,7 +104,7 @@ class gen_read_py:
         #add variables to the tree
         if tree is not None:
             for i in tlist:
-                tree.Branch(i, AddressOf(tree_out, i), i+"/D")
+                tree.Branch(i, addressof(tree_out, i), i+"/D")
 
         return tree_out
 

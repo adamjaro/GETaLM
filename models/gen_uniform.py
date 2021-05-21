@@ -5,7 +5,7 @@
 #_____________________________________________________________________________
 
 import ROOT as rt
-from ROOT import TRandom3, gROOT, AddressOf, TDatabasePDG, TMath
+from ROOT import TRandom3, gROOT, addressof, TDatabasePDG, TMath
 
 from particle import particle
 
@@ -17,15 +17,15 @@ class gen_uniform:
         #minumum and maximum energy, GeV
         self.emin = parse.getfloat("main", "emin")
         self.emax = parse.getfloat("main", "emax")
-        print "emin =", self.emin
-        print "emax =", self.emax
+        print("emin =", self.emin)
+        print("emax =", self.emax)
 
         #pdg for generated particle, electron or photon
         self.pdg = 22
         if parse.has_option("main", "pdg"):
             self.pdg = parse.getint("main", "pdg")
 
-        print "pdg =", self.pdg
+        print("pdg =", self.pdg)
 
         #angular range, electrons for now
         self.theta_min = 0.
@@ -35,13 +35,13 @@ class gen_uniform:
         if parse.has_option("main", "mlt_min"):
             mlt_min = parse.getfloat("main", "mlt_min")
             mlt_max = parse.getfloat("main", "mlt_max")
-            print "mlt_min =", mlt_min
-            print "mlt_max =", mlt_max
+            print("mlt_min =", mlt_min)
+            print("mlt_max =", mlt_max)
             self.theta_min = TMath.Pi() - 10.**(-mlt_min)
             self.theta_max = TMath.Pi() - 10.**(-mlt_max)
 
-        print "theta_min =", self.theta_min
-        print "theta_max =", self.theta_max
+        print("theta_min =", self.theta_min)
+        print("theta_max =", self.theta_max)
 
         #generator functions for photons and electrons
         self.gen_func = {}
@@ -50,7 +50,7 @@ class gen_uniform:
 
         #test for pdg
         if self.gen_func.get(self.pdg) is None:
-            print "Fatal: pdg", self.pdg, "is not supported"
+            print("Fatal: pdg", self.pdg, "is not supported")
             raise KeyError
 
         #uniform generator
@@ -67,7 +67,7 @@ class gen_uniform:
             tnam = ["true_el_pT", "true_el_theta", "true_el_phi", "true_el_E"]
         self.out = self.make_tree(tree, tnam)
 
-        print "Uniform generator initialized"
+        print("Uniform generator initialized")
 
     #_____________________________________________________________________________
     def gen_phot(self, add_particle):
@@ -150,7 +150,7 @@ class gen_uniform:
         #set the variables in the tree
         if tree is not None:
             for i in tnam:
-                tree.Branch(i, AddressOf(self.out, i), i+"/D")
+                tree.Branch(i, addressof(self.out, i), i+"/D")
 
         return self.out
 

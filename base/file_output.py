@@ -2,7 +2,7 @@
 import atexit
 
 import ROOT as rt
-from ROOT import TFile, TTree, gROOT, AddressOf, TClonesArray
+from ROOT import TFile, TTree, gROOT, addressof, TClonesArray
 
 #_____________________________________________________________________________
 class file_output:
@@ -30,7 +30,7 @@ class file_output:
         #TX output
 
         nam = parse.get("main", "nam").strip("\"'") + ".tx"
-        print "TX output name:", nam
+        print("TX output name:", nam)
 
         self.tx_out = open(nam, "w")
         self.tx_ievt = 1
@@ -41,7 +41,7 @@ class file_output:
         #ROOT output
 
         nam = parse.get("main", "nam").strip("\"'") + ".root"
-        print "ROOT output name:", nam
+        print("ROOT output name:", nam)
 
         self.out_root = TFile(nam, "recreate")
         #tree variables, all Double_t
@@ -57,7 +57,7 @@ class file_output:
         self.ltree = TTree("ltree", "ltree")
         for i in tlist:
             exec("self.tree_out."+i+"=0")
-            self.ltree.Branch(i, AddressOf(self.tree_out, i), i+"/D")
+            self.ltree.Branch(i, addressof(self.tree_out, i), i+"/D")
 
         #particles array
         self.particles_out = TClonesArray("TParticle")

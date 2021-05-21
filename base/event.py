@@ -1,5 +1,5 @@
 
-import ConfigParser
+import configparser
 from sys import stdout
 
 from beam_effects import beam_effects
@@ -20,8 +20,8 @@ class event:
     def __init__(self, config):
 
         #input configuration
-        print "Generator configuration:", config
-        parse = ConfigParser.RawConfigParser()
+        print("Generator configuration:", config)
+        parse = configparser.RawConfigParser(inline_comment_prefixes=(";","#"))
         parse.read(config)
 
         #output
@@ -44,7 +44,7 @@ class event:
         elif model == "Lifshitz_93p16":
             self.gen = gen_Lifshitz_93p16(parse, self.out.ltree)
         else:
-            print "Invalid generator specified"
+            print("Invalid generator specified")
             exit()
 
         #beam effects
@@ -57,7 +57,7 @@ class event:
 
         #run
         nev = parse.getint("main", "nev") # number of events to generate
-        print "Number of events:", nev
+        print("Number of events:", nev)
         self.event_loop(nev)
 
     #_____________________________________________________________________________
@@ -65,13 +65,13 @@ class event:
 
         iprint = nev/12
 
-        for i in xrange(nev):
-            if i%iprint == 0:
-                print 100*i/nev, "%"
+        for i in range(nev):
+            if i%iprint == 0 and i>0:
+                print("{0:.1f} %".format(100.*i/nev))
                 stdout.flush()
             self.generate()
 
-        print "All done"
+        print("All done")
 
     #_____________________________________________________________________________
     def generate(self):

@@ -16,12 +16,12 @@ class gen_h1:
         #proton beam, GeV
         self.Ep = parse.getfloat("main", "Ep")
 
-        print "Ee =", self.Ee, "GeV"
-        print "Ep =", self.Ep, "GeV"
+        print("Ee =", self.Ee, "GeV")
+        print("Ep =", self.Ep, "GeV")
 
         #minimal photon energy, GeV
         self.emin = parse.getfloat("main", "emin")
-        print "emin =", self.emin
+        print("emin =", self.emin)
 
         #electron and proton mass
         self.me = TDatabasePDG.Instance().GetParticle(11).Mass()
@@ -31,22 +31,24 @@ class gen_h1:
         #CMS energy squared, GeV^2
         self.s = 2*self.Ee*self.Ep + self.me**2 + self.mp**2
         self.s += 2*TMath.Sqrt(self.Ee**2 - self.me**2) * TMath.Sqrt(self.Ep**2 - self.mp**2)
-        print "s =", self.s, "GeV^2"
+        print("s =", self.s, "GeV^2")
 
         #normalization,  4 alpha r_e^2
         self.ar2 = 4*7.297*2.818*2.818*1e-2 # m barn
 
         #parametrizations for dSigma/dy and dSigma/dtheta
         gRandom.SetSeed(5572323)
-        self.dSigDy = TF1("dSigDy", self.eq1, self.emin/self.Ee, 1)
+        self.eq1par = self.eq1(self)
+        self.dSigDy = TF1("dSigDy", self.eq1par, self.emin/self.Ee, 1)
         tmax = 1.5e-3 #maximal photon angle
-        self.dSigDtheta = TF1("dSigDtheta", self.eq3, 0, tmax)
+        self.eq3par = self.eq3(self)
+        self.dSigDtheta = TF1("dSigDtheta", self.eq3par, 0, tmax)
 
         #uniform generator for azimuthal angles
         self.rand = TRandom3()
         self.rand.SetSeed(5572323)
 
-        print "H1 parametrization initialized"
+        print("H1 parametrization initialized")
         print("Total cross section: "+str(self.dSigDy.Integral(self.emin/self.Ee, 1))+" mb")
 
     #_____________________________________________________________________________
@@ -73,25 +75,31 @@ class gen_h1:
         electron.vec -= phot.vec
 
     #_____________________________________________________________________________
-    def eq1(self, x):
+    class eq1:
+        def __init__(self, gen):
+            self.gen = gen
+        def __call__(self, x, par):
 
-        #formula for dSigma/dy with y = Eg/Ee
+            #formula for dSigma/dy with y = Eg/Ee
 
-        y = x[0]
+            y = x[0]
 
-        t1 = self.ar2/y
-        t2 = 1. + (1.-y)**2 - (2./3)*(1-y)
-        t3 = TMath.Log( self.s*(1-y)/(self.mep*y) ) - 0.5
+            t1 = self.gen.ar2/y
+            t2 = 1. + (1.-y)**2 - (2./3)*(1-y)
+            t3 = TMath.Log( self.gen.s*(1-y)/(self.gen.mep*y) ) - 0.5
 
-        return t1*t2*t3
+            return t1*t2*t3
 
     #_____________________________________________________________________________
-    def eq3(self, x):
+    class eq3:
+        def __init__(self, gen):
+            self.gen = gen
+        def __call__(self, x, par):
 
-        #formula for angular distribution
+            #formula for angular distribution
 
-        t = x[0] # rad
-        return 1e-9 * t/( ((self.me/self.Ee)**2 + t*t)**2 )
+            t = x[0] # rad
+            return 1e-9 * t/( ((self.gen.me/self.gen.Ee)**2 + t*t)**2 )
 
 
 

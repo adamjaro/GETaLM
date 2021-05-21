@@ -15,7 +15,7 @@ class gen_electron_beam:
 
         #electron beam energy, GeV
         self.Ee = parse.getfloat("main", "Ee")
-        print "Ee =", self.Ee
+        print("Ee =", self.Ee)
 
         #energy spread from input relative energy spread
         self.espread = None
@@ -27,7 +27,7 @@ class gen_electron_beam:
         #electron mass
         self.me = TDatabasePDG.Instance().GetParticle(11).Mass()
 
-        print "Electron beam initialized"
+        print("Electron beam initialized")
 
     #_____________________________________________________________________________
     def generate(self, add_particle):
@@ -37,13 +37,9 @@ class gen_electron_beam:
         if self.espread is not None:
             de = self.espread.GetRandom()
 
-        #print de
-
         #electron energy and momentum along z
         en = self.Ee + de
         pz = -TMath.Sqrt(en**2 - self.me**2)
-
-        #print en, pz
 
         #beam Lorentz vector
         beam = particle(11)

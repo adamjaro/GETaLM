@@ -16,12 +16,12 @@ class gen_zeus:
         #proton beam, GeV
         self.Ep = parse.getfloat("main", "Ep")
 
-        print "Ee =", self.Ee, "GeV"
-        print "Ep =", self.Ep, "GeV"
+        print("Ee =", self.Ee, "GeV")
+        print("Ep =", self.Ep, "GeV")
 
         #minimal photon energy, GeV
         self.emin = parse.getfloat("main", "emin")
-        print "emin =", self.emin
+        print("emin =", self.emin)
 
         #maximal photon angle
         self.tmax = 1.5e-3
@@ -38,10 +38,12 @@ class gen_zeus:
 
         #parametrizations for dSigma/dE_gamma and dSigma/dtheta
         gRandom.SetSeed(5572323)
-        self.dSigDe = TF1("dSigDe", self.eq1, self.emin, self.Ee)
+        self.eq1par = self.eq1(self)
+        self.dSigDe = TF1("dSigDe", self.eq1par, self.emin, self.Ee)
 
         self.theta_const = 1e-11 # constant term in theta formula
-        self.dSigDtheta = TF1("dSigDtheta", self.eq2, 0, self.tmax)
+        self.eq2par = self.eq2(self)
+        self.dSigDtheta = TF1("dSigDtheta", self.eq2par, 0, self.tmax)
 
         #uniform generator for azimuthal angles
         self.rand = TRandom3()
@@ -51,32 +53,37 @@ class gen_zeus:
         print("Total cross section: "+str(self.dSigDe.Integral(self.emin, self.Ee))+" mb")
 
     #_____________________________________________________________________________
-    def eq1(self, x):
+    class eq1:
+        def __init__(self, gen):
+            self.gen = gen
+        def __call__(self, x, par):
 
-        #E_gamma
-        Eg = x[0]
-        #electron and proton energy
-        Ee = self.Ee
-        Ep = self.Ep
+            #E_gamma
+            Eg = x[0]
+            #electron and proton energy
+            Ee = self.gen.Ee
+            Ep = self.gen.Ep
 
-        #scattered electron Ee'
-        Escat = Ee - Eg
-        #if Escat < 1e-5: return 0.
+            #scattered electron Ee'
+            Escat = Ee - Eg
+            #if Escat < 1e-5: return 0.
 
-        t1 = Escat/(Eg*Ee)
-        t2 = (Ee/Escat) + (Escat/Ee) - 2./3
-        t3 = TMath.Log(4*Ep*Ee*Escat/(self.mep*Eg)) - 1./2
+            t1 = Escat/(Eg*Ee)
+            t2 = (Ee/Escat) + (Escat/Ee) - 2./3
+            t3 = TMath.Log(4*Ep*Ee*Escat/(self.gen.mep*Eg)) - 1./2
 
-        return self.ar2*t1*t2*t3
+            return self.gen.ar2*t1*t2*t3
 
     #_____________________________________________________________________________
-    def eq2(self, x):
+    class eq2:
+        def __init__(self, gen):
+            self.gen = gen
+        def __call__(self, x, par):
 
-        #photon angular distribution
-        t = x[0]
+            #photon angular distribution
+            t = x[0]
 
-        #1e-11
-        return self.theta_const * t/(( (self.me/self.Ee)**2 + t**2 )**2)
+            return self.gen.theta_const * t/(( (self.gen.me/self.gen.Ee)**2 + t**2 )**2)
 
     #_____________________________________________________________________________
     def generate(self, add_particle):
