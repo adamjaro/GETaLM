@@ -19,10 +19,16 @@ class file_output:
         if parse.has_option("main", "write_root"):
             self.set_write_root = parse.getboolean("main", "write_root")
 
+        self.set_write_hepmc = False
+        if parse.has_option("main", "write_hepmc"):
+            self.set_write_hepmc = parse.getboolean("main", "write_hepmc")
+
         if self.set_write_tx: self.make_tx(parse)
 
         self.ltree = None
         if self.set_write_root: self.make_root(parse)
+
+        if self.set_write_hepmc: self.make_hepmc(parse)
 
     #_____________________________________________________________________________
     def make_tx(self, parse):
@@ -65,6 +71,20 @@ class file_output:
         self.ltree.Branch("particles", self.particles_out)
 
         atexit.register(self.close_root)
+
+    #_____________________________________________________________________________
+    def make_hepmc(self, parse):
+
+        #HepMC3 output
+
+        global hepmc
+        from pyHepMC3 import HepMC3 as hepmc
+
+        nam = parse.get("main", "nam").strip("\"'") + ".hepmc"
+        print("HepMC3 output name:", nam)
+
+        self.hepmc_out = hepmc.WriterAscii(nam, hepmc.GenRunInfo())
+        self.hepmc_ievt = 0
 
     #_____________________________________________________________________________
     def write_tx(self, tracks):
@@ -151,6 +171,32 @@ class file_output:
 
         #fill the tree
         self.ltree.Fill()
+
+    #_____________________________________________________________________________
+    def write_hepmc(self, tracks):
+
+        #HepMC3 format
+
+        if not self.set_write_hepmc: return
+
+        #hepmc event
+        evt = hepmc.GenEvent(hepmc.Units.GEV, hepmc.Units.MM)
+        evt.set_event_number(self.hepmc_ievt);
+
+        #vertex position
+        if len(tracks) > 0:
+            evt.shift_position_to( hepmc.FourVector(tracks[0].vx, tracks[0].vy, tracks[0].vz, 0) )
+
+        #tracks loop
+        for t in tracks:
+            #only final particles
+            if t.stat != 1: continue
+
+            evt.add_particle( t.make_hepmc_particle(hepmc) )
+
+        self.hepmc_out.write_event(evt)
+
+        self.hepmc_ievt += 1
 
     #_____________________________________________________________________________
     def close_root(self):

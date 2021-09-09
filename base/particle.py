@@ -59,10 +59,14 @@ class particle:
         p.SetPdgCode(self.pdg)
         p.SetProductionVertex(self.vx, self.vy, self.vz, 0)
 
+    #_____________________________________________________________________________
+    def make_hepmc_particle(self, hepmc):
 
+        #create HepMC3 particle
 
+        p = hepmc.GenParticle(hepmc.FourVector(self.vec.Px(), self.vec.Py(), self.vec.Pz(), self.vec.E()), self.pdg, 1)
 
-
+        return p
 
 
 

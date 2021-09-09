@@ -12,6 +12,7 @@ from gen_electron_beam import gen_electron_beam
 from gen_read_py import gen_read_py
 from gen_uniform import gen_uniform
 from gen_Lifshitz_93p16 import gen_Lifshitz_93p16
+from gen_beam_gas import gen_beam_gas
 
 #_____________________________________________________________________________
 class event:
@@ -43,6 +44,8 @@ class event:
             self.gen = gen_uniform(parse, self.out.ltree)
         elif model == "Lifshitz_93p16":
             self.gen = gen_Lifshitz_93p16(parse, self.out.ltree)
+        elif model == "beam-gas":
+            self.gen = gen_beam_gas(parse, self.out.ltree)
         else:
             print("Invalid generator specified")
             exit()
@@ -88,9 +91,10 @@ class event:
         if self.beff is not None:
             self.beff.apply(self.tracks)
 
-        #TX and ROOT outputs
+        #TX, ROOT and HepMC3 outputs
         self.out.write_tx(self.tracks)
         self.out.write_root(self.tracks)
+        self.out.write_hepmc(self.tracks)
 
     #_____________________________________________________________________________
     def add_particle(self, part):
