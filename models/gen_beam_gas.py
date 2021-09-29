@@ -18,6 +18,7 @@ from beam import beam
 class gen_beam_gas:
     #_____________________________________________________________________________
     def __init__(self, parse, tree=None):
+        self.parse = parse
 
         #electron energy, GeV
         self.Ee = parse.getfloat("main", "Ee")
@@ -67,14 +68,14 @@ class gen_beam_gas:
         self.rand.SetSeed(5572323)
 
         #chamber pressure for z-vertex
-        self.pressure_par = self.eq_pressure()
+        self.pressure_par = self.eq_pressure(self)
         self.pressure_func = TF1("pressure", self.pressure_par, self.pressure_par.zmin, self.pressure_par.zmax)
 
         #electron lattice
         self.lat = self.load_lattice()
 
         #beam transverte shape for vertex in x and y
-        self.beam_par = self.eq_beam_sigma(self.lat, self.pressure_par.hz)
+        self.beam_par = self.eq_beam_sigma(self.lat, self.pressure_par.hz, parse)
 
         #tree output from the generator
         tlist = ["true_phot_w", "true_phot_delta"]
@@ -186,7 +187,7 @@ class gen_beam_gas:
 
     #_____________________________________________________________________________
     class eq_pressure:
-        def __init__(self):
+        def __init__(self, gen):
 
             #pressure from input spreadsheet for z-vertex
 
@@ -194,8 +195,11 @@ class gen_beam_gas:
             from scipy.interpolate import interp1d
 
             #open the input
-            self.xls = pd.read_excel("/home/jaroslav/sim/lattice/chamber/Detector_chamber_210813.xlsx", sheet_name="H2 only, 10000Ahrs"\
-                , usecols="B,C", skiprows=12, nrows=100, index_col=None, header=None)
+            self.xls = pd.read_excel(gen.parse.get("main", "pressure_xlsx").strip("\"'"),\
+                sheet_name=gen.parse.get("main", "pressure_sheet").strip("\"'"),\
+                usecols=gen.parse.get("main", "pressure_usecols").strip("\"'"),\
+                skiprows=gen.parse.getint("main", "pressure_skiprows"),\
+                nrows=gen.parse.getint("main", "pressure_nrows"), index_col=None, header=None)
 
             #z position in mm and inverted sign for detector convention
             self.xls[1] = -1e3*self.xls[1]
@@ -218,13 +222,13 @@ class gen_beam_gas:
 
     #_____________________________________________________________________________
     class eq_beam_sigma:
-        def __init__(self, lat, hz):
+        def __init__(self, lat, hz, parse):
 
             #beam sigma from input lattice for vertex in x and y
 
             #beam emittance
-            eps_x = 20e-9 # m
-            eps_y = 1.3e-9 # m
+            eps_x = parse.getfloat("main", "eps_x")
+            eps_y = parse.getfloat("main", "eps_y")
 
             #spacing in z
             self.hz = hz
@@ -302,7 +306,7 @@ class gen_beam_gas:
         from pandas import DataFrame
 
         #input lattice
-        inp = open("/home/jaroslav/sim/lattice/esr/esr-ir6-100-10.txt", "r")
+        inp = open(self.parse.get("main", "lattice_txt").strip("\"'"), "r")
 
         #lattice dataframe
         col = ["name", "key", "s", "length", "angle", "x_pitch", "magnet_x", "magnet_z", "magnet_theta",\
