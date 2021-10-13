@@ -69,7 +69,15 @@ class gen_beam_gas:
 
         #chamber pressure for z-vertex
         self.pressure_par = self.eq_pressure(self)
-        self.pressure_func = TF1("pressure", self.pressure_par, self.pressure_par.zmin, self.pressure_par.zmax)
+        zmin = self.pressure_par.zmin
+        zmax = self.pressure_par.zmax
+        #custom range in z, only within the default limits given by pressure data
+        if parse.has_option("main", "zmin") and ( parse.getfloat("main", "zmin") > zmin ):
+            zmin = parse.getfloat("main", "zmin")
+        if parse.has_option("main", "zmax") and ( parse.getfloat("main", "zmax") < zmax ):
+            zmax = parse.getfloat("main", "zmax")
+        print("zmin, zmax (mm):", zmin, zmax)
+        self.pressure_func = TF1("pressure", self.pressure_par, zmin, zmax)
 
         #electron lattice
         self.lat = self.load_lattice()
@@ -199,7 +207,8 @@ class gen_beam_gas:
                 sheet_name=gen.parse.get("main", "pressure_sheet").strip("\"'"),\
                 usecols=gen.parse.get("main", "pressure_usecols").strip("\"'"),\
                 skiprows=gen.parse.getint("main", "pressure_skiprows"),\
-                nrows=gen.parse.getint("main", "pressure_nrows"), index_col=None, header=None)
+                nrows=gen.parse.getint("main", "pressure_nrows"),\
+                index_col=None, header=None, engine="openpyxl")
 
             #z position in mm and inverted sign for detector convention
             self.xls[1] = -1e3*self.xls[1]
