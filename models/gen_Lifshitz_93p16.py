@@ -52,6 +52,7 @@ class gen_Lifshitz_93p16:
         pz_a = TMath.Sqrt(self.Ep**2-self.mp**2)*self.Z
         en_a = TMath.Sqrt(pz_a**2 + self.mn**2)
         nvec.SetPxPyPzE(0, 0, pz_a, en_a)
+        print("Nucleus beam gamma:", nvec.Gamma())
 
         #boost vector of nucleus beam
         self.nbvec = nvec.BoostVector()
@@ -59,6 +60,7 @@ class gen_Lifshitz_93p16:
         #electron beam vector
         evec = TLorentzVector()
         evec.SetPxPyPzE(0, 0, -TMath.Sqrt(self.Ee**2-self.me**2), self.Ee)
+        print("Electron beam gamma:", evec.Gamma())
 
         #electron beam energy in nucleus beam rest frame
         evec.Boost(-self.nbvec.x(), -self.nbvec.y(), -self.nbvec.z())

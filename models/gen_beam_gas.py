@@ -5,11 +5,13 @@
 #_____________________________________________________________________________
 
 from ctypes import c_double
+import atexit
 import numpy as np
 
 import ROOT as rt
 from ROOT import TRandom3, gROOT, addressof, TDatabasePDG, TLorentzVector
 from ROOT import TMath, TF2, TF1, TRandom3, gRandom, TH1D
+from ROOT import TFoam, std
 
 from particle import particle
 from beam import beam
@@ -32,8 +34,8 @@ class gen_beam_gas:
         print("Z:", self.Z)
 
         #minimal photon energy, GeV
-        emin = parse.getfloat("main", "emin")
-        print("emin, GeV =", emin)
+        self.emin = parse.getfloat("main", "emin")
+        print("emin, GeV =", self.emin)
 
         #alpha r_e^2
         self.ar2 = 7.297*2.818*2.818*1e-2 # m barn
@@ -42,26 +44,39 @@ class gen_beam_gas:
         self.me = TDatabasePDG.Instance().GetParticle(11).Mass()
 
         #maximal delta
-        dmax = 200.
+        self.dmax = 200.
         if parse.has_option("main", "dmax"):
-            dmax = parse.getfloat("main", "dmax")
+            self.dmax = parse.getfloat("main", "dmax")
 
-        print("dmax:", dmax)
+        print("dmax:", self.dmax)
 
         #cross section formula
-        self.eqpar = self.eq_93p16(self)
-        self.dSigDwDt = TF2("dSigDwDt", self.eqpar, emin, self.Ee, 0, dmax)
-        self.dSigDwDt.SetNpx(2000)
-        self.dSigDwDt.SetNpy(2000)
+        #self.eqpar = self.eq_93p16(self)
+        #self.dSigDwDt = TF2("dSigDwDt", self.eqpar, self.emin, self.Ee, 0, self.dmax)
+        #self.dSigDwDt.SetNpx(2000)
+        #self.dSigDwDt.SetNpy(2000)
         #self.dSigDwDt.SetNpx(100)
         #self.dSigDwDt.SetNpy(100)
-        gRandom.SetSeed(5572323)
+        #gRandom.SetSeed(5572323)
 
         #total integrated cross section over all delta (to 1e5)
-        dSigInt = TF2("dSigInt", self.eqpar, emin, self.Ee, 0, 1e5)
-        sigma_tot = dSigInt.Integral(emin, self.Ee, 0, 1e5)
+        #dSigInt = TF2("dSigInt", self.eqpar, self.emin, self.Ee, 0, 1e5)
+        #sigma_tot = dSigInt.Integral(self.emin, self.Ee, 0, 1e5)
+        #print("Total cross section, mb:", sigma_tot)
 
-        print("Total cross section, mb:", sigma_tot)
+        #FOAM integration
+        self.eq_foam = self.eq_93p16_foam(self)
+        self.rand_foam = TRandom3()
+        self.rand_foam.SetSeed(123)
+        self.foam = TFoam("foam")
+        self.foam.SetkDim(2)
+        self.foam.SetnCells(2000)
+        self.foam.SetRhoInt(self.eq_foam)
+        self.foam.SetPseRan(self.rand_foam)
+        self.foam.Initialize()
+
+        #to print the total cross section from FOAM at the end
+        atexit.register(self.finish)
 
         #uniform generator for azimuthal angles
         self.rand = TRandom3()
@@ -99,12 +114,20 @@ class gen_beam_gas:
         #return
 
         #photon energy and delta in nucleus rest frame
-        w = c_double(0)
-        d = c_double(0)
-        self.dSigDwDt.GetRandom2(w, d)
+        #w = c_double(0)
+        #d = c_double(0)
+        #self.dSigDwDt.GetRandom2(w, d)
 
-        w = w.value
-        d = d.value
+        #w = w.value
+        #d = d.value
+
+        #photon energy and delta in nucleus rest frame by FOAM
+        wdvec = std.vector("double")(2)
+        self.foam.MakeEvent()
+        self.foam.GetMCvect(wdvec.data())
+
+        w = wdvec[0]*self.Ee
+        d = wdvec[1]*self.dmax
 
         #set the tree output
         self.tree_out.true_phot_w = w
@@ -192,6 +215,46 @@ class gen_beam_gas:
             sig = t1*(t2 - t3)
 
             return sig
+
+    #_____________________________________________________________________________
+    class eq_93p16_foam:
+        def __init__(self, gen):
+            self.gen = gen
+        def __call__(self, ndim, x):
+
+            #Eq. 93.16 from Lifshitz QED for bremsstrahlung, version for TFoam
+
+            #photon energy and angle, FOAM input ranges from 0 to 1
+            w = x[0]*self.gen.Ee
+            d = x[1]*self.gen.dmax
+
+            if w < self.gen.emin: return 0.
+
+            #initial and final electron E and E'
+            E = self.gen.Ee
+            Efin = E - w
+
+            t1 = 8.*self.gen.Z*self.gen.Z*self.gen.ar2*(1./w)*(Efin/E)*d/((1+d**2)**2)
+
+            t2 = ( (E/Efin) + (Efin/E) - 4*d*d/((1+d**2)**2) )*TMath.Log(2.*E*Efin/(self.gen.me*w))
+
+            t3 = 0.5*( (E/Efin) + (Efin/E) + 2 - 16*d*d/((1+d**2)**2) )
+
+            sig = t1*(t2 - t3)
+
+            return sig
+
+    #_____________________________________________________________________________
+    def finish(self):
+
+        foam_int = c_double(0)
+        foam_int_err = c_double(0)
+        self.foam.Finalize(foam_int, foam_int_err)
+
+        sig = foam_int.value*self.dmax*(self.Ee-self.emin)
+        sig_err = foam_int_err.value*self.dmax*(self.Ee-self.emin)
+
+        print("Total cross section (mb):", sig, "+/-", sig_err)
 
     #_____________________________________________________________________________
     class eq_pressure:
