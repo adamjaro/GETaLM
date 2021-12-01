@@ -28,6 +28,7 @@ class file_output:
         self.ltree = None
         if self.set_write_root: self.make_root(parse)
 
+        self.hepmc_attrib = {}
         if self.set_write_hepmc: self.make_hepmc(parse)
 
     #_____________________________________________________________________________
@@ -182,6 +183,11 @@ class file_output:
         #hepmc event
         evt = hepmc.GenEvent(hepmc.Units.GEV, hepmc.Units.MM)
         evt.set_event_number(self.hepmc_ievt);
+
+        #event attributes
+        for i in self.hepmc_attrib:
+            attr = hepmc.DoubleAttribute(self.hepmc_attrib[i])
+            evt.add_attribute(i, attr)
 
         #vertex position
         if len(tracks) > 0:

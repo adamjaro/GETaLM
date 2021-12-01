@@ -35,7 +35,7 @@ class event:
         elif model == "zeus":
             self.gen = gen_zeus(parse)
         elif model == "quasi-real":
-            self.gen = gen_quasi_real(parse, self.out.ltree)
+            self.gen = gen_quasi_real(parse, self.out.ltree, self.out.hepmc_attrib)
         elif model == "electron-beam":
             self.gen = gen_electron_beam(parse)
         elif model == "read-py":
@@ -66,7 +66,9 @@ class event:
     #_____________________________________________________________________________
     def event_loop(self, nev):
 
-        iprint = nev/12
+        iprint = int(nev/12)
+        if iprint == 0:
+            iprint = 12
 
         for i in range(nev):
             if i%iprint == 0 and i>0:

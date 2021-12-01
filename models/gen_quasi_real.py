@@ -30,7 +30,7 @@ from particle import particle
 #_____________________________________________________________________________
 class gen_quasi_real:
     #_____________________________________________________________________________
-    def __init__(self, parse, tree):
+    def __init__(self, parse, tree, hepmc_attrib):
 
         print("Quasi-real configuration:")
 
@@ -144,6 +144,9 @@ class gen_quasi_real:
             for i in tnam:
                 tree.Branch(i, addressof(self.out, i), i+"/D")
 
+        #event attributes for hepmc
+        self.hepmc_attrib = hepmc_attrib
+
         #counters for all generated and selected events
         self.nall = 0
         self.nsel = 0
@@ -223,16 +226,27 @@ class gen_quasi_real:
         self.out.true_Q2 = Q2
         self.out.true_W2 = self.s*y
 
+        #hepmc event attributes
+        self.hepmc_attrib["truex"] = x
+        self.hepmc_attrib["truey"] = y
+        self.hepmc_attrib["trueQ2"] = Q2
+        self.hepmc_attrib["trueW2"] = self.s*y
+
         #electron kinematics
         self.out.true_el_pT = el.vec.Pt()
         self.out.true_el_theta = el.vec.Theta()
         self.out.true_el_phi = el.vec.Phi()
         self.out.true_el_E = el.vec.E()
 
+        self.hepmc_attrib["true_el_pT"] = self.out.true_el_pT
+        self.hepmc_attrib["true_el_theta"] = self.out.true_el_theta
+        self.hepmc_attrib["true_el_phi"] = self.out.true_el_phi
+        self.hepmc_attrib["true_el_E"] = self.out.true_el_E
+
         #Q^2 from electron energy and angle
         self.out.true_el_Q2 = 2.*self.Ee*el.vec.E()*(1.-TMath.Cos(TMath.Pi()-el.vec.Theta()))
 
-        #print Q2, self.out.gen_el_Q2
+        self.hepmc_attrib["true_el_Q2"] = self.out.true_el_Q2
 
     #_____________________________________________________________________________
     class eq_II6_uv:
