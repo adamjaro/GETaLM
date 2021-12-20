@@ -39,7 +39,7 @@ class event:
         elif model == "electron-beam":
             self.gen = gen_electron_beam(parse)
         elif model == "read-py":
-            self.gen = gen_read_py(parse, self.out.ltree)
+            self.gen = gen_read_py(parse, self.out.ltree, self.out.hepmc_attrib)
         elif model == "uniform":
             self.gen = gen_uniform(parse, self.out.ltree)
         elif model == "Lifshitz_93p16":

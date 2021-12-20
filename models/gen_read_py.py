@@ -13,7 +13,7 @@ from particle import particle
 #_____________________________________________________________________________
 class gen_read_py:
     #_____________________________________________________________________________
-    def __init__(self, parse, tree):
+    def __init__(self, parse, tree, hepmc_attrib):
 
         #open the input
         nam = parse.get("main", "input").strip("\"'")
@@ -27,6 +27,9 @@ class gen_read_py:
         tlist = ["true_x", "true_y", "true_Q2", "true_W2", "true_Nu"]
         tlist += ["true_el_pT", "true_el_theta", "true_el_phi", "true_el_E"]
         self.tree_out = self.set_tree(tree, tlist)
+
+        #event attributes for hepmc
+        self.hepmc_attrib = hepmc_attrib
 
         print("gen_read_py initialized")
 
@@ -48,6 +51,12 @@ class gen_read_py:
                 self.tree_out.true_x = float(line[12])
                 self.tree_out.true_W2 = float(line[13])
                 self.tree_out.true_Nu = float(line[14])
+
+                self.hepmc_attrib["truex"] = self.tree_out.true_x
+                self.hepmc_attrib["truey"] = self.tree_out.true_y
+                self.hepmc_attrib["trueQ2"] = self.tree_out.true_Q2
+                self.hepmc_attrib["trueW2"] = self.tree_out.true_W2
+                self.hepmc_attrib["trueNu"] = self.tree_out.true_Nu
 
             #skip non-particle lines and header
             if len(line) != 14: continue
@@ -81,6 +90,11 @@ class gen_read_py:
             self.tree_out.true_el_theta = el.vec.Theta()
             self.tree_out.true_el_phi = el.vec.Phi()
             self.tree_out.true_el_E = el.vec.E()
+
+            self.hepmc_attrib["true_el_pT"] = el.vec.Pt()
+            self.hepmc_attrib["true_el_theta"] = el.vec.Theta()
+            self.hepmc_attrib["true_el_phi"] = el.vec.Phi()
+            self.hepmc_attrib["true_el_E"] = el.vec.E()
 
         #print self.tree_out.true_y, self.tree_out.true_Q2, self.tree_out.true_x, self.tree_out.true_W2, self.tree_out.true_Nu
 
