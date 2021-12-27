@@ -12,7 +12,7 @@ from particle import particle
 #_____________________________________________________________________________
 class gen_uniform:
     #_____________________________________________________________________________
-    def __init__(self, parse, tree):
+    def __init__(self, parse, tree, hepmc_attrib):
 
         #minumum and maximum energy, GeV
         self.emin = parse.getfloat("main", "emin")
@@ -67,6 +67,9 @@ class gen_uniform:
             tnam = ["true_el_pT", "true_el_theta", "true_el_phi", "true_el_E"]
         self.out = self.make_tree(tree, tnam)
 
+        #event attributes for hepmc
+        self.hepmc_attrib = hepmc_attrib
+
         print("Uniform generator initialized")
 
     #_____________________________________________________________________________
@@ -120,6 +123,12 @@ class gen_uniform:
         self.out.true_el_theta = el.vec.Theta()
         self.out.true_el_phi = el.vec.Phi()
         self.out.true_el_E = el.vec.E()
+
+        #electron kinematics in hepmc
+        self.hepmc_attrib["true_el_pT"] = self.out.true_el_pT
+        self.hepmc_attrib["true_el_theta"] = self.out.true_el_theta
+        self.hepmc_attrib["true_el_phi"] = self.out.true_el_phi
+        self.hepmc_attrib["true_el_E"] = self.out.true_el_E
 
         #put the electron to the event
         add_particle( el )

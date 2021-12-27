@@ -41,7 +41,7 @@ class event:
         elif model == "read-py":
             self.gen = gen_read_py(parse, self.out.ltree, self.out.hepmc_attrib)
         elif model == "uniform":
-            self.gen = gen_uniform(parse, self.out.ltree)
+            self.gen = gen_uniform(parse, self.out.ltree, self.out.hepmc_attrib)
         elif model == "Lifshitz_93p16":
             self.gen = gen_Lifshitz_93p16(parse, self.out.ltree)
         elif model == "beam-gas":
