@@ -43,7 +43,7 @@ class event:
         elif model == "uniform":
             self.gen = gen_uniform(parse, self.out.ltree, self.out.hepmc_attrib)
         elif model == "Lifshitz_93p16":
-            self.gen = gen_Lifshitz_93p16(parse, self.out.ltree)
+            self.gen = gen_Lifshitz_93p16(parse, self.out.ltree, self.out.hepmc_attrib)
         elif model == "beam-gas":
             self.gen = gen_beam_gas(parse, self.out.ltree)
         else:

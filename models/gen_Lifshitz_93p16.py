@@ -16,7 +16,7 @@ from beam import beam
 #_____________________________________________________________________________
 class gen_Lifshitz_93p16:
     #_____________________________________________________________________________
-    def __init__(self, parse, tree):
+    def __init__(self, parse, tree, hepmc_attrib):
 
         #electron and proton energy, GeV
         self.Ee = parse.getfloat("main", "Ee")
@@ -105,6 +105,9 @@ class gen_Lifshitz_93p16:
         tlist += ["true_el_theta", "true_el_phi", "true_el_E"]
         self.tree_out = self.set_tree(tree, tlist)
 
+        #event attributes for hepmc
+        self.hepmc_attrib = hepmc_attrib
+
         print("Lifshitz_93p16 parametrization initialized")
 
     #_____________________________________________________________________________
@@ -125,6 +128,11 @@ class gen_Lifshitz_93p16:
         self.tree_out.true_phot_w = w
         self.tree_out.true_phot_delta = d
         self.tree_out.true_phot_theta_n = theta_n
+
+        #hepmc event attributes
+        self.hepmc_attrib["true_phot_w"] = w
+        self.hepmc_attrib["true_phot_delta"] = d
+        self.hepmc_attrib["true_phot_theta_n"] = theta_n
 
         #uniform azimuthal angle
         phi_n = 2. * TMath.Pi() * self.rand.Rndm() #uniform azimuthal angle
@@ -164,6 +172,14 @@ class gen_Lifshitz_93p16:
         self.tree_out.true_el_theta = electron.vec.Theta()
         self.tree_out.true_el_phi = electron.vec.Phi()
         self.tree_out.true_el_E = electron.vec.E()
+
+        #hepmc attributes for the true photon and electron kinematics
+        self.hepmc_attrib["true_phot_theta"] = phot.vec.Theta()
+        self.hepmc_attrib["true_phot_phi"] = phot.vec.Phi()
+        self.hepmc_attrib["true_phot_E"] = phot.vec.E()
+        self.hepmc_attrib["true_el_theta"] = electron.vec.Theta()
+        self.hepmc_attrib["true_el_phi"] = electron.vec.Phi()
+        self.hepmc_attrib["true_el_E"] = electron.vec.E()
 
     #_____________________________________________________________________________
     class eq:
