@@ -8,40 +8,40 @@ from ROOT import TF1, gROOT, AddressOf
 class beam_effects:
     #angular divergence and emittance
     #_____________________________________________________________________________
-    def __init__(self, parse, tree=None):
+    def __init__(self, parse, tree=None, section="beam_effects"):
 
         # flag to use or not use the beam effects
         self.use_beam_effects = False
-        if parse.has_section("beam_effects") == True:
-            self.use_beam_effects = parse.getboolean("beam_effects", "use_beam_effects")
+        if parse.has_section(section) == True:
+            self.use_beam_effects = parse.getboolean(section, "use_beam_effects")
 
-        print("Beam effects configuration:")
+        print("Beam effects configuration in:", section)
         print("use_beam_effects =", self.use_beam_effects)
 
         if self.use_beam_effects == False: return
 
         #beam size at IP in x, sigma_x in mm
-        sig_x = parse.getfloat("beam_effects", "sig_x")
+        sig_x = parse.getfloat(section, "sig_x")
         print("sig_x =", sig_x)
         self.vtx_x = self.make_gaus("vtx_x", sig_x)
 
         #beam size at IP in y, sigma_y in mm
-        sig_y = parse.getfloat("beam_effects", "sig_y")
+        sig_y = parse.getfloat(section, "sig_y")
         print("sig_y =", sig_y)
         self.vtx_y = self.make_gaus("vtx_y", sig_y)
 
         #bunch length along z
-        sig_z = parse.getfloat("beam_effects", "sig_z")
+        sig_z = parse.getfloat(section, "sig_z")
         print("sig_z =", sig_z)
         self.vtx_z = self.make_gaus("vtx_z", sig_z)
 
         #angular divergence in x, horizontal, rad
-        theta_x = parse.getfloat("beam_effects", "theta_x")
+        theta_x = parse.getfloat(section, "theta_x")
         print("theta_x =", theta_x)
         self.div_x = self.make_gaus("div_x", theta_x)
 
         #angular divergence in y, vertical, rad
-        theta_y = parse.getfloat("beam_effects", "theta_y")
+        theta_y = parse.getfloat(section, "theta_y")
         print("theta_y =", theta_y)
         self.div_y = self.make_gaus("div_y", theta_y)
 
@@ -60,16 +60,9 @@ class beam_effects:
         ypos = self.vtx_y.GetRandom()
         zpos = self.vtx_z.GetRandom()
 
-        self.tree_out.beff_vx = xpos
-        self.tree_out.beff_vy = ypos
-        self.tree_out.beff_vz = zpos
-
         #angular divergence in x and y
         tx = self.div_x.GetRandom()
         ty = self.div_y.GetRandom()
-
-        self.tree_out.beff_tx = tx
-        self.tree_out.beff_ty = ty
 
         #apply to the final particles
         for i in tracks:
@@ -87,6 +80,15 @@ class beam_effects:
             #divergence in y by rotation along x
             i.vec.RotateX(ty)
 
+        if self.tree_out is not None:
+
+            self.tree_out.beff_vx = xpos
+            self.tree_out.beff_vy = ypos
+            self.tree_out.beff_vz = zpos
+
+            self.tree_out.beff_tx = tx
+            self.tree_out.beff_ty = ty
+
     #_____________________________________________________________________________
     def make_gaus(self, name, sig):
 
@@ -98,7 +100,9 @@ class beam_effects:
     #_____________________________________________________________________________
     def set_tree(self, tree, tlist):
 
-        #set output to the tree
+        #set output to the tree if provided
+        if tree is None:
+            return None
 
         #tree variables
         struct = "struct beff2_out { Double_t "
@@ -113,9 +117,8 @@ class beam_effects:
             exec("tree_out."+i+"=0")
 
         #add variables to the tree
-        if tree is not None:
-            for i in tlist:
-                tree.Branch(i, AddressOf(tree_out, i), i+"/D")
+        for i in tlist:
+            tree.Branch(i, AddressOf(tree_out, i), i+"/D")
 
         return tree_out
 

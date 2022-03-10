@@ -14,6 +14,7 @@ from ROOT import gROOT, addressof
 
 from particle import particle
 from beam import beam
+from beam_effects import beam_effects
 
 #_____________________________________________________________________________
 class gen_Lifshitz_bx:
@@ -119,6 +120,9 @@ class gen_Lifshitz_bx:
         #event attributes for hepmc
         self.hepmc_attrib = hepmc_attrib
 
+        #beam effects
+        self.beff = beam_effects(parse, None, "Lifshitz_bx")
+
         print("Lifshitz_bx parametrization initialized")
 
     #_____________________________________________________________________________
@@ -172,6 +176,9 @@ class gen_Lifshitz_bx:
 
         #constrain the scattered electron with the photon
         electron.vec -= phot.vec
+
+        #beam effects for the photon and electron
+        self.beff.apply((phot, electron))
 
         if self.nbunch != 0: return
 
