@@ -27,9 +27,14 @@ class gen_uniform:
 
         print("pdg =", self.pdg)
 
-        #angular range, electrons for now
+        #angular range
         self.theta_min = 0.
         self.theta_max = 0.
+
+        #maximal polar angle as pi - theta_max in rad
+        if parse.has_option("main", "pitheta_max"):
+            self.theta_min = TMath.Pi() - parse.getfloat("main", "pitheta_max")
+            self.theta_max = TMath.Pi()
 
         #angles as mlt = -log_10(pi - theta)
         if parse.has_option("main", "mlt_min"):
@@ -62,7 +67,7 @@ class gen_uniform:
 
         #set the output tree
         if self.pdg == 22:
-            tnam = ["gen_E"]
+            tnam = ["true_phot_theta", "true_phot_phi", "true_phot_E"]
         if self.pdg == 11:
             tnam = ["true_el_pT", "true_el_theta", "true_el_phi", "true_el_E"]
         self.out = self.make_tree(tree, tnam)
@@ -79,15 +84,29 @@ class gen_uniform:
 
         #energy for the current event
         en = self.emin + (self.emax - self.emin) * self.rand.Rndm()
-        self.out.gen_E = en
 
-        #print en
+        #polar and azimuthal angles
+        theta = self.theta_min + (self.theta_max - self.theta_min) * self.rand.Rndm()
+        phi = 2. * TMath.Pi() * self.rand.Rndm()
+
+        #photon momentum
+        px = en * TMath.Sin(theta) * TMath.Cos(phi)
+        py = en * TMath.Sin(theta) * TMath.Sin(phi)
+        pz = en * TMath.Cos(theta)
 
         #make the photon
         phot = particle(22)
-        phot.vec.SetPxPyPzE(0, 0, -en, en)
+        phot.vec.SetPxPyPzE(px, py, pz, en)
         phot.stat = 1
         phot.pxyze_prec = 9
+
+        #photon kinematics in the output
+        self.out.true_phot_theta = phot.vec.Theta()
+        self.out.true_phot_phi = phot.vec.Phi()
+        self.out.true_phot_E = phot.vec.E()
+        self.hepmc_attrib["true_phot_theta"] = phot.vec.Theta()
+        self.hepmc_attrib["true_phot_phi"] = phot.vec.Phi()
+        self.hepmc_attrib["true_phot_E"] = phot.vec.E()
 
         #put the photon to the event
         add_particle( phot )
