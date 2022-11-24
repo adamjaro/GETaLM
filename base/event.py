@@ -14,6 +14,7 @@ from gen_uniform import gen_uniform
 from gen_Lifshitz_93p16 import gen_Lifshitz_93p16
 from gen_beam_gas import gen_beam_gas
 from gen_Lifshitz_bx import gen_Lifshitz_bx
+from gen_sig_bx import gen_sig_bx
 
 #_____________________________________________________________________________
 class event:
@@ -49,6 +50,8 @@ class event:
             self.gen = gen_beam_gas(parse, self.out.ltree)
         elif model == "Lifshitz_bx":
             self.gen = gen_Lifshitz_bx(parse, self.out.ltree, self.out.hepmc_attrib)
+        elif model == "sig_bx":
+            self.gen = gen_sig_bx(parse, self.out.ltree, self.out.hepmc_attrib)
         else:
             print("Invalid generator specified")
             exit()

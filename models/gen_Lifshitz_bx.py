@@ -103,6 +103,7 @@ class gen_Lifshitz_bx:
 
         #Poisson distribution for number of interactions per bunch crossing
         self.nbunch = parse.getint("Lifshitz_bx", "nbunch")
+        print("nbunch:", self.nbunch)
         #nbunch = 0 sets for single interaction simulated per event
         if self.nbunch > 1:
             self.pois = self.make_pois(parse, self.nbunch, sigma_tot)
