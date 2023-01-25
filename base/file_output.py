@@ -4,6 +4,8 @@ import atexit
 import ROOT as rt
 from ROOT import TFile, TTree, gROOT, addressof, TClonesArray
 
+from beam import beam
+
 #_____________________________________________________________________________
 class file_output:
     #output from the generator
@@ -86,6 +88,9 @@ class file_output:
 
         self.hepmc_out = hepmc.WriterAscii(nam, hepmc.GenRunInfo())
         self.hepmc_ievt = 0
+
+        #electron beam energy to create the primary vertex
+        self.hepmc_Ee = parse.getfloat("main", "Ee")
 
     #_____________________________________________________________________________
     def write_tx(self, tracks):
@@ -189,16 +194,22 @@ class file_output:
             attr = hepmc.DoubleAttribute(self.hepmc_attrib[i])
             evt.add_attribute(i, attr)
 
-        #vertex position
-        if len(tracks) > 0:
-            evt.shift_position_to( hepmc.FourVector(tracks[0].vx, tracks[0].vy, tracks[0].vz, 0) )
+        #primary vertex
+        vtx = hepmc.GenVertex( hepmc.FourVector(tracks[0].vx, tracks[0].vy, tracks[0].vz, 0) )
+
+        #beam electron as minimal incoming particle to the primary vertex
+        beam_el = beam(self.hepmc_Ee, 11, -1)
+        vtx.add_particle_in( hepmc.GenParticle(hepmc.FourVector(beam_el.vec.Px(), beam_el.vec.Py(), beam_el.vec.Pz(),\
+            beam_el.vec.E()), beam_el.pdg, 4) )
 
         #tracks loop
         for t in tracks:
             #only final particles
             if t.stat != 1: continue
 
-            evt.add_particle( t.make_hepmc_particle(hepmc) )
+            vtx.add_particle_out( t.make_hepmc_particle(hepmc) )
+
+        evt.add_vertex(vtx)
 
         self.hepmc_out.write_event(evt)
 
