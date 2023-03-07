@@ -67,7 +67,7 @@ class beam_effects:
         #apply to the final particles
         for i in tracks:
             #select only final particles
-            if i.stat != 1: continue
+            #if i.stat != 1: continue
 
             #vertex position
             i.vx = xpos

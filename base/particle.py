@@ -11,8 +11,8 @@ class particle:
         self.vec = TLorentzVector()
         #index in particle list
         self.idx = 0
-        #status code
-        self.stat = 0
+        #status code 1=decay to be tracked, 3=beam particle
+        self.stat = 1
         #pdg code
         self.pdg = pdg
         #particle database for pass and codes
@@ -65,7 +65,7 @@ class particle:
 
         #create HepMC3 particle
 
-        p = hepmc.GenParticle(hepmc.FourVector(self.vec.Px(), self.vec.Py(), self.vec.Pz(), self.vec.E()), self.pdg, 1)
+        p = hepmc.GenParticle(hepmc.FourVector(self.vec.Px(), self.vec.Py(), self.vec.Pz(), self.vec.E()), self.pdg, self.stat)
 
         return p
 

@@ -210,7 +210,7 @@ class file_output:
         #tracks loop
         for t in tracks:
             #only final particles
-            if t.stat != 1: continue
+            #if t.stat != 1: continue
 
             #new primary vertex
             if t.vtx_id != ivtx:

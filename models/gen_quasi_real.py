@@ -26,6 +26,8 @@ from ROOT import TF2, TMath, TRandom3, gROOT, addressof, TDatabasePDG
 from ROOT import TLorentzVector
 
 from particle import particle
+from beam import beam
+
 
 #_____________________________________________________________________________
 class gen_quasi_real:
@@ -42,11 +44,11 @@ class gen_quasi_real:
 
         #electron and proton mass
         self.me = TDatabasePDG.Instance().GetParticle(11).Mass()
-        mp = TDatabasePDG.Instance().GetParticle(2212).Mass()
+        self.mp = TDatabasePDG.Instance().GetParticle(2212).Mass()
 
         #boost vector pbvec of proton beam
         pbeam = TLorentzVector()
-        pbeam.SetPxPyPzE(0, 0, TMath.Sqrt(self.Ep**2-mp**2), self.Ep)
+        pbeam.SetPxPyPzE(0, 0, TMath.Sqrt(self.Ep**2-self.mp**2), self.Ep)
         self.pbvec = pbeam.BoostVector()
 
         #electron beam energy Ee_p in proton beam rest frame
@@ -54,9 +56,9 @@ class gen_quasi_real:
         ebeam.SetPxPyPzE(0, 0, -TMath.Sqrt(self.Ee**2-self.me**2), self.Ee)
         ebeam.Boost(-self.pbvec.x(), -self.pbvec.y(), -self.pbvec.z()) # transform to proton beam frame
         self.Ee_p = ebeam.E()
-
+        
         #center-of-mass squared s, GeV^2
-        self.s = self.get_s(self.Ee, self.Ep)
+        self.s = self.get_s()
         print("s =", self.s, "GeV^2")
         print("sqrt(s) =", TMath.Sqrt(self.s), "GeV")
 
@@ -197,6 +199,16 @@ class gen_quasi_real:
             self.nsel += 1 # increment selected counter
 
             break
+        
+        #beam electron
+        ebeam = add_particle( beam(self.Ee, 11, -1) )
+        ebeam.stat = 4
+        ebeam.pxyze_prec = 9
+        
+        #beam proton
+        pbeam = add_particle( beam(self.Ep, 2212, 1) )
+        pbeam.stat = 4
+        pbeam.pxyze_prec = 9
 
         #scattered electron in the event
         el = add_particle( particle(11) )
@@ -266,16 +278,13 @@ class gen_quasi_real:
             return sig
 
     #_____________________________________________________________________________
-    def get_s(self, Ee, Ep):
+    def get_s(self):
 
         #calculate the CMS squared s
 
-        #proton mass
-        mp = TDatabasePDG.Instance().GetParticle(2212).Mass()
-
         #CMS energy squared s, GeV^2
-        s = 2.*Ee*Ep + self.me**2 + mp**2
-        s += 2*TMath.Sqrt(Ee**2 - self.me**2) * TMath.Sqrt(Ep**2 - mp**2)
+        s = 2.*self.Ee*self.Ep + self.me**2 + self.mp**2
+        s += 2*TMath.Sqrt(self.Ee**2 - self.me**2) * TMath.Sqrt(self.Ep**2 - self.mp**2)
 
         #print "sqrt(s):", TMath.Sqrt(s)
 
