@@ -89,8 +89,9 @@ class file_output:
         self.hepmc_out = hepmc.WriterAscii(nam, hepmc.GenRunInfo())
         self.hepmc_ievt = 0
 
-        #electron beam energy to create the primary vertex
+        #electron and proton beam energy to create primary vertex
         self.hepmc_Ee = parse.getfloat("main", "Ee")
+        self.hepmc_Ep = parse.getfloat("main", "Ep")
 
     #_____________________________________________________________________________
     def write_tx(self, tracks):
@@ -197,10 +198,13 @@ class file_output:
         #primary vertex
         vtx = hepmc.GenVertex( hepmc.FourVector(tracks[0].vx, tracks[0].vy, tracks[0].vz, 0) )
 
-        #beam electron as minimal incoming particle to the primary vertex
+        #beam electron and proton as incoming particles to primary vertex
         beam_el = beam(self.hepmc_Ee, 11, -1)
+        beam_prot = beam(self.hepmc_Ep, 2212, 1)
         vtx.add_particle_in( hepmc.GenParticle(hepmc.FourVector(beam_el.vec.Px(), beam_el.vec.Py(), beam_el.vec.Pz(),\
             beam_el.vec.E()), beam_el.pdg, 4) )
+        vtx.add_particle_in( hepmc.GenParticle(hepmc.FourVector(beam_prot.vec.Px(), beam_prot.vec.Py(),\
+            beam_prot.vec.Pz(), beam_prot.vec.E()), beam_prot.pdg, 4) )
 
         #tracks loop
         for t in tracks:
