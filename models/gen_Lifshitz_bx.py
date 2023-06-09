@@ -120,6 +120,7 @@ class gen_Lifshitz_bx:
 
         #event attributes for hepmc
         self.hepmc_attrib = hepmc_attrib
+        self.hepmc_vtx_start = 0 # first particle vertex id
 
         #beam effects
         self.beff = beam_effects(parse, None, "Lifshitz_bx")
@@ -137,10 +138,10 @@ class gen_Lifshitz_bx:
             self.hepmc_attrib["num_interactions"] = ni
 
         for i in range(ni):
-            self.make_phot_el(add_particle)
+            self.make_phot_el(add_particle, i+self.hepmc_vtx_start)
 
     #_____________________________________________________________________________
-    def make_phot_el(self, add_particle):
+    def make_phot_el(self, add_particle, ivtx):
 
         #photon energy and delta in nucleus rest frame by FOAM
         self.foam.MakeEvent()
@@ -156,6 +157,7 @@ class gen_Lifshitz_bx:
         #photon particle
         phot = add_particle( particle(22) )
         phot.stat = 1
+        phot.vtx_id = ivtx
         phot.pxyze_prec = 9
 
         #set the photon vector in nucleus rest frame
@@ -173,6 +175,7 @@ class gen_Lifshitz_bx:
         #scattered electron, initialize as beam
         electron = add_particle( beam(self.Ee, 11, -1) )
         electron.stat = 1
+        electron.vtx_id = ivtx
         electron.pxyze_prec = 9
 
         #constrain the scattered electron with the photon

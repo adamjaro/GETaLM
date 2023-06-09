@@ -40,6 +40,7 @@ class gen_sig_bx:
             add_particle(i)
 
         #generate background particles
+        self.bkg_model.hepmc_vtx_start = 1 # start after the signal vertex
         self.bkg_model.generate(add_particle)
 
     #_____________________________________________________________________________

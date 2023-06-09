@@ -276,6 +276,17 @@ class gen_beam_gas:
             #z position in mm and inverted sign for detector convention
             self.xls[1] = -1e3*self.xls[1]
 
+            #additional flat vacuum level at lower z below the xlsx if requested
+            if gen.parse.has_option("main", "pressure_lowz_start"):
+                lowz_start = gen.parse.getfloat("main", "pressure_lowz_start")
+                lowz_end = gen.parse.getfloat("main", "pressure_lowz_end")
+                lowz_mbar = gen.parse.getfloat("main", "pressure_lowz_mbar")
+
+                lowz_data = [{1:lowz_start, 2:lowz_mbar}, {1:lowz_end, 2:lowz_mbar}]
+
+                #add the additional pressure level to the DataFrame
+                self.xls = pd.concat( [pd.DataFrame(lowz_data), self.xls], ignore_index=True )
+
             #range in z from the input
             self.zmin = self.xls[1][ self.xls[1].index[0] ]
             self.zmax = self.xls[1][ self.xls[1].index[-1] ]
@@ -411,7 +422,8 @@ class gen_beam_gas:
         df = DataFrame(val, columns=col)
 
         #range with pressure data, in lattice convention
-        df = df.query("s>-33 and s<10")
+        #df = df.query("s>-33 and s<10")
+        df = df.query("s>-33 and s<40")
 
         return df
 

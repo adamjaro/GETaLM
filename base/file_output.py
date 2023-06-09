@@ -91,7 +91,9 @@ class file_output:
 
         #electron and proton beam energy to create primary vertex
         self.hepmc_Ee = parse.getfloat("main", "Ee")
-        self.hepmc_Ep = parse.getfloat("main", "Ep")
+        self.hepmc_Ep = -1.
+        if parse.has_option("main", "Ep"):
+            self.hepmc_Ep = parse.getfloat("main", "Ep")
 
     #_____________________________________________________________________________
     def write_tx(self, tracks):
@@ -195,25 +197,44 @@ class file_output:
             attr = hepmc.DoubleAttribute(self.hepmc_attrib[i])
             evt.add_attribute(i, attr)
 
-        #primary vertex
-        vtx = hepmc.GenVertex( hepmc.FourVector(tracks[0].vx, tracks[0].vy, tracks[0].vz, 0) )
-
         #beam electron and proton as incoming particles to primary vertex
         beam_el = beam(self.hepmc_Ee, 11, -1)
-        beam_prot = beam(self.hepmc_Ep, 2212, 1)
-        vtx.add_particle_in( hepmc.GenParticle(hepmc.FourVector(beam_el.vec.Px(), beam_el.vec.Py(), beam_el.vec.Pz(),\
-            beam_el.vec.E()), beam_el.pdg, 4) )
-        vtx.add_particle_in( hepmc.GenParticle(hepmc.FourVector(beam_prot.vec.Px(), beam_prot.vec.Py(),\
-            beam_prot.vec.Pz(), beam_prot.vec.E()), beam_prot.pdg, 4) )
+        if self.hepmc_Ep > 0:
+            #proton beam only when requested
+            beam_prot = beam(self.hepmc_Ep, 2212, 1)
+
+        #vertices in the event
+        vertices = []
+        ivtx = -1 # index for current vertex
 
         #tracks loop
         for t in tracks:
             #only final particles
             if t.stat != 1: continue
 
+            #new primary vertex
+            if t.vtx_id != ivtx:
+
+                ivtx = t.vtx_id
+
+                #create the vertex
+                vtx = hepmc.GenVertex( hepmc.FourVector(t.vx, t.vy, t.vz, 0) )
+                vertices.append(vtx)
+
+                #beam particles in the vertex
+                vtx.add_particle_in( hepmc.GenParticle(hepmc.FourVector(beam_el.vec.Px(),\
+                    beam_el.vec.Py(), beam_el.vec.Pz(), beam_el.vec.E()), beam_el.pdg, 4) )
+                if self.hepmc_Ep > 0:
+                    #proton beam only when requested
+                    vtx.add_particle_in( hepmc.GenParticle(hepmc.FourVector(beam_prot.vec.Px(),\
+                        beam_prot.vec.Py(), beam_prot.vec.Pz(), beam_prot.vec.E()), beam_prot.pdg, 4) )
+
+            #add particle to the vertex
             vtx.add_particle_out( t.make_hepmc_particle(hepmc) )
 
-        evt.add_vertex(vtx)
+        #vertex loop
+        for v in vertices:
+            evt.add_vertex(v)
 
         self.hepmc_out.write_event(evt)
 
