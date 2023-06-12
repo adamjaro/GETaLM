@@ -297,7 +297,12 @@ class gen_beam_gas:
             self.interp = interp1d(self.xls[1], self.xls[2], kind="linear")
 
             #spacing in z for vertices in x and y
-            self.hz = TH1D("pressure_hz", "pressure_hz", 200, self.zmin, self.zmax)
+            beam_z_spacing = 400
+            if gen.parse.has_option("main", "beam_z_spacing"):
+                beam_z_spacing = gen.parse.getint("main", "beam_z_spacing")
+
+            print("beam_z_spacing:", beam_z_spacing)
+            self.hz = TH1D("pressure_hz", "pressure_hz", beam_z_spacing, self.zmin, self.zmax)
 
         def __call__(self, x, par):
 
