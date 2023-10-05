@@ -188,7 +188,7 @@ class gen_beam_gas:
 
         #divergence in y by rotation along x
         phot.vec.RotateX(divy)
-        phot.vec.RotateX(divy)
+        electron.vec.RotateX(divy)
 
     #_____________________________________________________________________________
     class eq_93p16:
