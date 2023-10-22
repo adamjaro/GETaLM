@@ -332,6 +332,9 @@ class gen_beam_gas:
             idiv_x = interp1d(lat["s"], self.beam_get_divergence(eps_x, lat["alpha_x"], lat["beta_x"]), kind="linear")
             idiv_y = interp1d(lat["s"], self.beam_get_divergence(eps_y, lat["alpha_y"], lat["beta_y"]), kind="linear")
 
+            #interpolation for xpos
+            f=interpolate.interp1d(lat["orbit_z"], lat["orbit_x"])
+
             #horizontal and vertical Gaussians
             self.gx = {}
             self.gy = {}
@@ -346,10 +349,13 @@ class gen_beam_gas:
                 spos = -1e-3*self.hz.GetBinCenter(ibin)
                 sigma_x = 1e3*np.sqrt(eps_x*beta_x(spos))
                 sigma_y = 1e3*np.sqrt(eps_y*beta_y(spos))
+                
+                #value of x(zpos) after interpolation in meters in lattice convention
+                xmean=f(spos)
 
                 #Gaussians for a given sigma at a given z
                 self.gx[ibin] = TF1("beam_sigma_x_"+str(ibin), "gaus", -5.*sigma_x, 5.*sigma_x)
-                self.gx[ibin].SetParameters(1, 0, sigma_x)
+                self.gx[ibin].SetParameters(1, xmean, sigma_x)
                 self.gy[ibin] = TF1("beam_sigma_y_"+str(ibin), "gaus", -5.*sigma_y, 5.*sigma_y)
                 self.gy[ibin].SetParameters(1, 0, sigma_y)
 
