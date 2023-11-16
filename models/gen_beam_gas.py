@@ -350,7 +350,7 @@ class gen_beam_gas:
                 sigma_x = 1e3*np.sqrt(eps_x*beta_x(spos))
                 sigma_y = 1e3*np.sqrt(eps_y*beta_y(spos))
                 
-                #value of x(zpos) after interpolation in meters in lattice convention
+                #value of x(zpos) after interpolation. Minus sign in order to be consistence with detector convention of z and x axis. 
                 xmean=-f(spos)
 
                 #Gaussians for a given sigma at a given z
