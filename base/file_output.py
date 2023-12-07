@@ -17,13 +17,17 @@ class file_output:
         if parse.has_option("main", "write_tx"):
             self.set_write_tx = parse.getboolean("main", "write_tx")
 
-        self.set_write_root = True
+        self.set_write_root = False
         if parse.has_option("main", "write_root"):
             self.set_write_root = parse.getboolean("main", "write_root")
 
         self.set_write_hepmc = False
         if parse.has_option("main", "write_hepmc"):
             self.set_write_hepmc = parse.getboolean("main", "write_hepmc")
+            
+        self.set_write_hepmc_root = False
+        if parse.has_option("main", "write_hepmc_root"):
+            self.set_write_hepmc_root = parse.getboolean("main", "write_hepmc_root")
 
         if self.set_write_tx: self.make_tx(parse)
 
@@ -32,6 +36,9 @@ class file_output:
 
         self.hepmc_attrib = {}
         if self.set_write_hepmc: self.make_hepmc(parse)
+        
+        self.hepmc_attrib = {}
+        if self.set_write_hepmc_root: self.make_hepmc_root(parse)
 
     #_____________________________________________________________________________
     def make_tx(self, parse):
@@ -94,6 +101,29 @@ class file_output:
         self.hepmc_Ep = -1.
         if parse.has_option("main", "Ep"):
             self.hepmc_Ep = parse.getfloat("main", "Ep")
+            
+    #_____________________________________________________________________________
+    def make_hepmc_root(self, parse):
+
+        #HepMC3 output
+
+        global hmrootIO
+        from pyHepMC3 import HepMC3 as hepmc
+        from pyHepMC3.rootIO import HepMC3 as hmrootIO
+
+        nam = parse.get("main", "nam").strip("\"'") + ".hepmc.root"
+        print("HepMC3 root output name:", nam)
+
+        self.hepmc_root_out = hmrootIO.WriterRootTree(nam)
+        self.hepmc_root_ievt = 0
+
+        #electron and proton beam energy to create primary vertex
+        self.hepmc_root_Ee = parse.getfloat("main", "Ee")
+        self.hepmc_root_Ep = -1.
+        if parse.has_option("main", "Ep"):
+            self.hepmc_root_Ep = parse.getfloat("main", "Ep")
+            
+        atexit.register(self.close_hepmc_root)
 
     #_____________________________________________________________________________
     def write_tx(self, tracks):
@@ -186,7 +216,7 @@ class file_output:
 
         #HepMC3 format
 
-        if not self.set_write_hepmc: return
+        if not (self.set_write_hepmc or self.set_write_hepmc_root): return
 
         #hepmc event
         evt = hepmc.GenEvent(hepmc.Units.GEV, hepmc.Units.MM)
@@ -210,7 +240,7 @@ class file_output:
         #tracks loop
         for t in tracks:
             #only final particles
-            if t.stat != 1: continue
+            #if t.stat != 1: continue
 
             #new primary vertex
             if t.vtx_id != ivtx:
@@ -236,7 +266,11 @@ class file_output:
         for v in vertices:
             evt.add_vertex(v)
 
-        self.hepmc_out.write_event(evt)
+        if self.set_write_hepmc:
+            self.hepmc_out.write_event(evt)
+            
+        if self.set_write_hepmc_root:
+            self.hepmc_root_out.write_event(evt)
 
         self.hepmc_ievt += 1
 
@@ -248,6 +282,11 @@ class file_output:
 
 
 
+
+    #_____________________________________________________________________________
+    def close_hepmc_root(self):
+
+        self.hepmc_root_out.close()
 
 
 
