@@ -35,10 +35,10 @@ class file_output:
         if self.set_write_root: self.make_root(parse)
 
         self.hepmc_attrib = {}
-        if self.set_write_hepmc: self.make_hepmc(parse)
+
+        if (self.set_write_hepmc or self.set_write_hepmc_root):
+            self.make_hepmc(parse)
         
-        self.hepmc_attrib = {}
-        if self.set_write_hepmc_root: self.make_hepmc_root(parse)
 
     #_____________________________________________________________________________
     def make_tx(self, parse):
@@ -88,12 +88,23 @@ class file_output:
         #HepMC3 output
 
         global hepmc
+        global hmrootIO
         from pyHepMC3 import HepMC3 as hepmc
+        from pyHepMC3.rootIO import HepMC3 as hmrootIO
 
-        nam = parse.get("main", "nam").strip("\"'") + ".hepmc"
-        print("HepMC3 output name:", nam)
+        if(self.set_write_hepmc):
+            nam = parse.get("main", "nam").strip("\"'") + ".hepmc"
+            print("HepMC3 output name:", nam)        
 
-        self.hepmc_out = hepmc.WriterAscii(nam, hepmc.GenRunInfo())
+            self.hepmc_out = hepmc.WriterAscii(nam, hepmc.GenRunInfo())
+
+        if(self.set_write_hepmc_root):
+            nam = parse.get("main", "nam").strip("\"'") + ".hepmc.root"
+            print("HepMC3 root output name:", nam)
+
+            self.hepmc_root_out = hmrootIO.WriterRootTree(nam)
+
+            
         self.hepmc_ievt = 0
 
         #electron and proton beam energy to create primary vertex
@@ -102,28 +113,6 @@ class file_output:
         if parse.has_option("main", "Ep"):
             self.hepmc_Ep = parse.getfloat("main", "Ep")
             
-    #_____________________________________________________________________________
-    def make_hepmc_root(self, parse):
-
-        #HepMC3 output
-
-        global hmrootIO
-        from pyHepMC3 import HepMC3 as hepmc
-        from pyHepMC3.rootIO import HepMC3 as hmrootIO
-
-        nam = parse.get("main", "nam").strip("\"'") + ".hepmc.root"
-        print("HepMC3 root output name:", nam)
-
-        self.hepmc_root_out = hmrootIO.WriterRootTree(nam)
-        self.hepmc_root_ievt = 0
-
-        #electron and proton beam energy to create primary vertex
-        self.hepmc_root_Ee = parse.getfloat("main", "Ee")
-        self.hepmc_root_Ep = -1.
-        if parse.has_option("main", "Ep"):
-            self.hepmc_root_Ep = parse.getfloat("main", "Ep")
-            
-        atexit.register(self.close_hepmc_root)
 
     #_____________________________________________________________________________
     def write_tx(self, tracks):
