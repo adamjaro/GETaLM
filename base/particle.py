@@ -25,6 +25,7 @@ class particle:
         self.vx = 0.
         self.vy = 0.
         self.vz = 0.
+        self.vt = 0.
         self.vtx_id = 0
         #precision for momentum and energy
         self.pxyze_prec = 6
@@ -58,7 +59,7 @@ class particle:
 
         p.SetMomentum(self.vec)
         p.SetPdgCode(self.pdg)
-        p.SetProductionVertex(self.vx, self.vy, self.vz, 0)
+        p.SetProductionVertex(self.vx, self.vy, self.vz, self.vt)
 
     #_____________________________________________________________________________
     def make_hepmc_particle(self, hepmc):

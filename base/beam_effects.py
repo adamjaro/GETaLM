@@ -34,6 +34,11 @@ class beam_effects:
         sig_z = parse.getfloat(section, "sig_z")
         print("sig_z =", sig_z)
         self.vtx_z = self.make_gaus("vtx_z", sig_z)
+        
+        #bunch length along z
+        sig_t = parse.getfloat(section, "sig_t")
+        print("sig_t =", sig_t)
+        self.vtx_t = self.make_gaus("vtx_t", sig_t)
 
         #angular divergence in x, horizontal, rad
         theta_x = parse.getfloat(section, "theta_x")
@@ -46,8 +51,11 @@ class beam_effects:
         self.div_y = self.make_gaus("div_y", theta_y)
 
         #tree output from beam effects
-        tlist = ["beff_vx", "beff_vy", "beff_vz", "beff_tx", "beff_ty"]
+        tlist = ["beff_vx", "beff_vy", "beff_vz", "beff_vt", "beff_tx", "beff_ty"]
         self.tree_out = self.set_tree(tree, tlist)
+
+        self.speed_of_light = 299.792
+        
 
     #_____________________________________________________________________________
     def apply(self, tracks):
@@ -59,6 +67,8 @@ class beam_effects:
         xpos = self.vtx_x.GetRandom()
         ypos = self.vtx_y.GetRandom()
         zpos = self.vtx_z.GetRandom()
+
+        time = -zpos/self.speed_of_light+self.vtx_t.GetRandom()
 
         #angular divergence in x and y
         tx = self.div_x.GetRandom()
@@ -73,6 +83,7 @@ class beam_effects:
             i.vx = xpos
             i.vy = ypos
             i.vz = zpos
+            i.vt = time
 
             #divergence in x by rotation along y
             i.vec.RotateY(tx)
@@ -85,6 +96,7 @@ class beam_effects:
             self.tree_out.beff_vx = xpos
             self.tree_out.beff_vy = ypos
             self.tree_out.beff_vz = zpos
+            self.tree_out.beff_vt = time
 
             self.tree_out.beff_tx = tx
             self.tree_out.beff_ty = ty

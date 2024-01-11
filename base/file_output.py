@@ -237,7 +237,7 @@ class file_output:
                 ivtx = t.vtx_id
 
                 #create the vertex
-                vtx = hepmc.GenVertex( hepmc.FourVector(t.vx, t.vy, t.vz, 0) )
+                vtx = hepmc.GenVertex( hepmc.FourVector(t.vx, t.vy, t.vz, t.vt) )
                 vertices.append(vtx)
 
                 #beam particles in the vertex
