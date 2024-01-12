@@ -109,9 +109,10 @@ class event:
 
         #keep track of particle index in event
         part.idx = len(self.tracks)+1
-        part.vx = 0.0
-        part.vy = 0.0
-        part.vz = 0.0
+        #part.vx = 0.0
+        #part.vy = 0.0
+        #part.vz = 0.0
+        #part.vt = 0.0
         self.tracks.append(part)
 
         return part

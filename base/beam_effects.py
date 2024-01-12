@@ -69,7 +69,7 @@ class beam_effects:
         zpos = self.vtx_z.GetRandom()
 
         time = -zpos/self.speed_of_light+self.vtx_t.GetRandom()
-
+                
         #angular divergence in x and y
         tx = self.div_x.GetRandom()
         ty = self.div_y.GetRandom()
@@ -84,6 +84,7 @@ class beam_effects:
             i.vy = ypos
             i.vz = zpos
             i.vt = time
+
 
             #divergence in x by rotation along y
             i.vec.RotateY(tx)
@@ -101,6 +102,7 @@ class beam_effects:
             self.tree_out.beff_tx = tx
             self.tree_out.beff_ty = ty
 
+            
     #_____________________________________________________________________________
     def make_gaus(self, name, sig):
 
