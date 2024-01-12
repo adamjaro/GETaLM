@@ -103,6 +103,7 @@ class file_output:
             print("HepMC3 root output name:", nam)
 
             self.hepmc_root_out = hmrootIO.WriterRootTree(nam)
+            atexit.register(self.close_hepmc_root)
 
             
         self.hepmc_ievt = 0
@@ -254,7 +255,7 @@ class file_output:
         #vertex loop
         for v in vertices:
             evt.add_vertex(v)
-
+        
         if self.set_write_hepmc:
             self.hepmc_out.write_event(evt)
             
