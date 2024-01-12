@@ -209,11 +209,16 @@ class gen_quasi_real:
         pbeam = add_particle( beam(self.Ep, 2212, 1) )
         pbeam.stat = 4
         pbeam.pxyze_prec = 9
-
+        
         #scattered electron in the event
         el = add_particle( particle(11) )
         el.stat = 1
         el.pxyze_prec = 9
+
+        #set vertex id type to 1
+        ebeam.vid = 1
+        pbeam.vid = 1
+        el.vid    = 1
 
         #kinematics for scattered electron in proton beam rest frame
         phi_p = 2. * TMath.Pi() * self.rand.Rndm() #uniform azimuthal angle

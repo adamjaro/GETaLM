@@ -26,6 +26,7 @@ class particle:
         self.vy = 0.
         self.vz = 0.
         self.vt = 0.
+        self.vid = 0
         self.vtx_id = 0
         #precision for momentum and energy
         self.pxyze_prec = 6

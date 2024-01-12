@@ -159,6 +159,7 @@ class gen_Lifshitz_bx:
         phot.stat = 1
         phot.vtx_id = ivtx
         phot.pxyze_prec = 9
+        phot.vid = 2
 
         #set the photon vector in nucleus rest frame
         px_n = w*TMath.Sin(theta_n)*TMath.Cos(phi_n)
@@ -177,6 +178,7 @@ class gen_Lifshitz_bx:
         electron.stat = 1
         electron.vtx_id = ivtx
         electron.pxyze_prec = 9
+        electron.vid = 2
 
         #constrain the scattered electron with the photon
         electron.vec -= phot.vec
@@ -187,28 +189,28 @@ class gen_Lifshitz_bx:
         if self.nbunch != 0: return
 
         #set the tree output and hepmc attributes for the case of one interaction
-        self.tree_out.true_phot_w = w
-        self.tree_out.true_phot_delta = d
-        self.tree_out.true_phot_theta_n = theta_n
-        self.hepmc_attrib["true_phot_w"] = w
-        self.hepmc_attrib["true_phot_delta"] = d
+        self.tree_out.true_phot_w              = w
+        self.tree_out.true_phot_delta          = d
+        self.tree_out.true_phot_theta_n        = theta_n
+        self.hepmc_attrib["true_phot_w"]       = w
+        self.hepmc_attrib["true_phot_delta"]   = d
         self.hepmc_attrib["true_phot_theta_n"] = theta_n
 
         #photon and electron kinematics
         self.tree_out.true_phot_theta = phot.vec.Theta()
-        self.tree_out.true_phot_phi = phot.vec.Phi()
-        self.tree_out.true_phot_E = phot.vec.E()
-        self.tree_out.true_el_theta = electron.vec.Theta()
-        self.tree_out.true_el_phi = electron.vec.Phi()
-        self.tree_out.true_el_E = electron.vec.E()
+        self.tree_out.true_phot_phi   = phot.vec.Phi()
+        self.tree_out.true_phot_E     = phot.vec.E()
+        self.tree_out.true_el_theta   = electron.vec.Theta()
+        self.tree_out.true_el_phi     = electron.vec.Phi()
+        self.tree_out.true_el_E       = electron.vec.E()
 
         #kinematics in hepmc attributes
         self.hepmc_attrib["true_phot_theta"] = phot.vec.Theta()
-        self.hepmc_attrib["true_phot_phi"] = phot.vec.Phi()
-        self.hepmc_attrib["true_phot_E"] = phot.vec.E()
-        self.hepmc_attrib["true_el_theta"] = electron.vec.Theta()
-        self.hepmc_attrib["true_el_phi"] = electron.vec.Phi()
-        self.hepmc_attrib["true_el_E"] = electron.vec.E()
+        self.hepmc_attrib["true_phot_phi"]   = phot.vec.Phi()
+        self.hepmc_attrib["true_phot_E"]     = phot.vec.E()
+        self.hepmc_attrib["true_el_theta"]   = electron.vec.Theta()
+        self.hepmc_attrib["true_el_phi"]     = electron.vec.Phi()
+        self.hepmc_attrib["true_el_E"]       = electron.vec.E()
 
 
     #_____________________________________________________________________________
