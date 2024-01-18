@@ -99,7 +99,7 @@ class file_output:
             self.hepmc_out = hepmc.WriterAscii(nam, hepmc.GenRunInfo())
 
         if(self.set_write_hepmc_root):
-            nam = parse.get("main", "nam").strip("\"'") + ".hepmc.root"
+            nam = parse.get("main", "nam").strip("\"'") + ".root.hepmc"
             print("HepMC3 root output name:", nam)
 
             self.hepmc_root_out = hmrootIO.WriterRootTree(nam)
