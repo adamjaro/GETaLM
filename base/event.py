@@ -2,6 +2,8 @@
 import configparser
 from sys import stdout
 
+from ROOT import gROOT
+
 from beam_effects import beam_effects
 from file_output import file_output
 
@@ -27,6 +29,12 @@ class event:
         parse = configparser.RawConfigParser(inline_comment_prefixes=(";","#"))
         parse.read(config)
 
+        if not parse.has_section("main"):
+            print("Failed to load the configuration")
+            return
+
+        print("ROOT version:", gROOT.GetVersion())
+
         #output
         self.out = file_output(parse)
 
@@ -35,7 +43,7 @@ class event:
         if model == "h1":
             self.gen = gen_h1(parse)
         elif model == "zeus":
-            self.gen = gen_zeus(parse)
+            self.gen = gen_zeus(parse, self.out.ltree)
         elif model == "quasi-real":
             self.gen = gen_quasi_real(parse, self.out.ltree, self.out.hepmc_attrib)
         elif model == "electron-beam":
@@ -59,7 +67,7 @@ class event:
         #beam effects
         self.beff = None
         if parse.has_section("beam_effects") == True:
-            self.beff = beam_effects(parse)
+            self.beff = beam_effects(parse, self.out.ltree)
 
         #tracks in the event
         self.tracks = []

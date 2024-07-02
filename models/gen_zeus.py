@@ -1,5 +1,7 @@
 
+import ROOT as rt
 from ROOT import TDatabasePDG, TF1, TRandom3, gRandom, TMath
+from ROOT import gROOT, addressof
 
 from photon import photon
 from beam import beam
@@ -9,7 +11,7 @@ class gen_zeus:
     #Bethe-Heitler bremsstrahlung photon according to ZEUS
     #Eur. Phys. J. C (2011) 71: 1574
     #_____________________________________________________________________________
-    def __init__(self, parse):
+    def __init__(self, parse, tree=None):
 
         #electron beam, GeV
         self.Ee = parse.getfloat("main", "Ee")
@@ -27,6 +29,8 @@ class gen_zeus:
         self.tmax = 1.5e-3
         if parse.has_option("main", "tmax"):
             self.tmax = parse.getfloat("main", "tmax")
+
+        print("tmax =", self.tmax)
 
         #electron and proton mass
         self.me = TDatabasePDG.Instance().GetParticle(11).Mass()
@@ -48,6 +52,15 @@ class gen_zeus:
         #uniform generator for azimuthal angles
         self.rand = TRandom3()
         self.rand.SetSeed(5572323)
+
+        #configure direct TTree output from the generator, used when 'tree'
+        #argument is provided
+        tlist = ["en", "theta", "phi"]
+        tlist += ["true_phot_en", "true_phot_theta", "true_phot_phi"]
+        tlist += ["true_phot_px", "true_phot_py", "true_phot_pz"]
+        tlist += ["true_el_en", "true_el_theta", "true_el_phi"]
+        tlist += ["true_el_px", "true_el_py", "true_el_pz"]
+        self.tree_out = self.set_tree(tree, tlist)
 
         print("ZEUS parametrization initialized")
         print("Total cross section: "+str(self.dSigDe.Integral(self.emin, self.Ee))+" mb")
@@ -101,6 +114,11 @@ class gen_zeus:
         #azimuthal angle
         phi = 2. * TMath.Pi() * self.rand.Rndm()
 
+        #set direct tree outputs for energy, theta and phi
+        self.tree_out.en = en
+        self.tree_out.theta = theta
+        self.tree_out.phi = phi
+
         #put the Bethe-Heitler bremsstrahlung photon to the event
         phot = add_particle( photon(en, theta, phi) )
         phot.pxyze_prec = 9 # increase kinematics precision for the photon
@@ -108,7 +126,43 @@ class gen_zeus:
         #constrain the scattered electron with the photon
         electron.vec -= phot.vec
 
+        #photon and electron kinematics in tree output
+        self.tree_out.true_phot_en = phot.vec.Energy()
+        self.tree_out.true_phot_theta = phot.vec.Theta()
+        self.tree_out.true_phot_phi = phot.vec.Phi()
+        self.tree_out.true_phot_px = phot.vec.Px()
+        self.tree_out.true_phot_py = phot.vec.Py()
+        self.tree_out.true_phot_pz = phot.vec.Pz()
+        self.tree_out.true_el_en = electron.vec.Energy()
+        self.tree_out.true_el_theta = electron.vec.Theta()
+        self.tree_out.true_el_phi = electron.vec.Phi()
+        self.tree_out.true_el_px = electron.vec.Px()
+        self.tree_out.true_el_py = electron.vec.Py()
+        self.tree_out.true_el_pz = electron.vec.Pz()
 
+    #_____________________________________________________________________________
+    def set_tree(self, tree, tlist):
+
+        #direct output to TTree if provided, Double_t values
+
+        #tree variables
+        struct = "struct gen_zeus { Double_t "
+        for i in tlist:
+            struct += i + ", "
+        struct = struct[:-2] + ";};"
+        gROOT.ProcessLine( struct )
+        tree_out = rt.gen_zeus()
+
+        #put zero to all variables
+        for i in tlist:
+            exec("tree_out."+i+"=0")
+
+        #add variables to the tree
+        if tree is not None:
+            for i in tlist:
+                tree.Branch(i, addressof(tree_out, i), i+"/D")
+
+        return tree_out
 
 
 

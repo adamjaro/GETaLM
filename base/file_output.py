@@ -2,7 +2,7 @@
 import atexit
 
 import ROOT as rt
-from ROOT import TFile, TTree, gROOT, addressof, TClonesArray
+from ROOT import TFile, TTree, gROOT, TClonesArray, TObject
 
 from beam import beam
 
@@ -59,21 +59,11 @@ class file_output:
         nam = parse.get("main", "nam").strip("\"'") + ".root"
         print("ROOT output name:", nam)
 
+        #create the output ROOT file
         self.out_root = TFile(nam, "recreate")
-        #tree variables, all Double_t
-        tlist = ["phot_en", "phot_theta", "phot_phi"]
-        tlist += ["el_en", "el_theta", "el_phi"]
-        #C structure holding the variables
-        struct = "struct tree_out { Double_t "
-        for i in tlist: struct += i + ", "
-        struct = struct[:-2] + ";};"
-        gROOT.ProcessLine( struct )
-        #create the output tree
-        self.tree_out = rt.tree_out() # instance of the C structure
+
+        #output tree
         self.ltree = TTree("ltree", "ltree")
-        for i in tlist:
-            exec("self.tree_out."+i+"=0")
-            self.ltree.Branch(i, addressof(self.tree_out, i), i+"/D")
 
         #particles array
         self.particles_out = TClonesArray("TParticle")
@@ -173,29 +163,13 @@ class file_output:
         ipos = 0
         self.particles_out.Clear("C")
 
-        t = self.tree_out
-
         for i in tracks:
-            #select the final photon and electron
+            #select final particles
             if i.stat != 1: continue
 
             #put the particles to TParticles clones array
             i.write_tparticle(self.particles_out, ipos)
             ipos += 1
-
-            #final photon
-            if i.pdg == 22:
-
-                t.phot_en    = i.vec.Energy()
-                t.phot_theta = i.vec.Theta()
-                t.phot_phi   = i.vec.Phi()
-
-            #final electron
-            if i.pdg == 11:
-
-                t.el_en     = i.vec.Energy()
-                t.el_theta  = i.vec.Theta()
-                t.el_phi    = i.vec.Phi()
 
         #fill the tree
         self.ltree.Fill()
@@ -266,7 +240,7 @@ class file_output:
     #_____________________________________________________________________________
     def close_root(self):
 
-        self.out_root.Write()
+        self.ltree.Write("", TObject.kOverwrite)
         self.out_root.Close()
 
 

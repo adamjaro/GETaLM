@@ -6,6 +6,7 @@
 #_____________________________________________________________________________
 
 from ctypes import c_double
+import atexit
 
 import ROOT
 from ROOT import TDatabasePDG, TLorentzVector, TMath
@@ -61,7 +62,11 @@ class gen_Lifshitz_bx:
         print("Ee_n (GeV):", self.Ee_n)
 
         #minimal photon energy in nucleus rest frame
-        emin = parse.getfloat("Lifshitz_bx", "emin")
+        emin = 0.5 # GeV
+        if parse.has_option("main", "emin"):
+            emin = parse.getfloat("main", "emin")
+        if parse.has_option("Lifshitz_bx", "emin"):
+            emin = parse.getfloat("Lifshitz_bx", "emin")
         print("emin (GeV):", emin)
         eminv = TLorentzVector()
         eminv.SetPxPyPzE(0, 0, -emin, emin)
@@ -71,6 +76,8 @@ class gen_Lifshitz_bx:
 
         #maximal delta in nucleus frame
         self.dmax_n = 100.
+        if parse.has_option("main", "dmax_n"):
+            self.dmax_n = parse.getfloat("main", "dmax_n")
         if parse.has_option("Lifshitz_bx", "dmax_n"):
             self.dmax_n = parse.getfloat("Lifshitz_bx", "dmax_n")
         print("dmax_n:", self.dmax_n)
@@ -102,7 +109,9 @@ class gen_Lifshitz_bx:
         self.rand.SetSeed(5572323)
 
         #Poisson distribution for number of interactions per bunch crossing
-        self.nbunch = parse.getint("Lifshitz_bx", "nbunch")
+        self.nbunch = 0
+        if parse.has_option("Lifshitz_bx", "nbunch"):
+            self.nbunch = parse.getint("Lifshitz_bx", "nbunch")
         print("nbunch:", self.nbunch)
         #nbunch = 0 sets for single interaction simulated per event
         if self.nbunch > 1:
@@ -111,8 +120,10 @@ class gen_Lifshitz_bx:
         #tree output from the generator
         if self.nbunch == 0:
             tlist = ["true_phot_w", "true_phot_delta", "true_phot_theta_n"]
-            tlist += ["true_phot_theta", "true_phot_phi", "true_phot_E"]
-            tlist += ["true_el_theta", "true_el_phi", "true_el_E"]
+            tlist += ["true_phot_theta", "true_phot_phi", "true_phot_en"]
+            tlist += ["true_phot_px", "true_phot_py", "true_phot_pz"]
+            tlist += ["true_el_theta", "true_el_phi", "true_el_en"]
+            tlist += ["true_el_px", "true_el_py", "true_el_pz"]
         else:
             tlist = ["num_interactions"]
 
@@ -122,8 +133,13 @@ class gen_Lifshitz_bx:
         self.hepmc_attrib = hepmc_attrib
         self.hepmc_vtx_start = 0 # first particle vertex id
 
-        #beam effects
-        self.beff = beam_effects(parse, None, "Lifshitz_bx")
+        #local beam effects in case the model is used as background
+        self.beff = None
+        if parse.has_section("Lifshitz_bx"):
+            self.beff = beam_effects(parse, None, "Lifshitz_bx")
+
+        #to print the total cross section from FOAM at the end
+        atexit.register(self.finish)
 
         print("Lifshitz_bx parametrization initialized")
 
@@ -181,35 +197,42 @@ class gen_Lifshitz_bx:
         #constrain the scattered electron with the photon
         electron.vec -= phot.vec
 
-        #beam effects for the photon and electron
-        self.beff.apply((phot, electron))
-
-        if self.nbunch != 0: return
-
         #set the tree output and hepmc attributes for the case of one interaction
-        self.tree_out.true_phot_w = w
-        self.tree_out.true_phot_delta = d
-        self.tree_out.true_phot_theta_n = theta_n
-        self.hepmc_attrib["true_phot_w"] = w
-        self.hepmc_attrib["true_phot_delta"] = d
-        self.hepmc_attrib["true_phot_theta_n"] = theta_n
+        if self.nbunch == 0:
 
-        #photon and electron kinematics
-        self.tree_out.true_phot_theta = phot.vec.Theta()
-        self.tree_out.true_phot_phi = phot.vec.Phi()
-        self.tree_out.true_phot_E = phot.vec.E()
-        self.tree_out.true_el_theta = electron.vec.Theta()
-        self.tree_out.true_el_phi = electron.vec.Phi()
-        self.tree_out.true_el_E = electron.vec.E()
+            #cross section formula
+            self.tree_out.true_phot_w = w
+            self.tree_out.true_phot_delta = d
+            self.tree_out.true_phot_theta_n = theta_n
+            self.hepmc_attrib["true_phot_w"] = w
+            self.hepmc_attrib["true_phot_delta"] = d
+            self.hepmc_attrib["true_phot_theta_n"] = theta_n
 
-        #kinematics in hepmc attributes
-        self.hepmc_attrib["true_phot_theta"] = phot.vec.Theta()
-        self.hepmc_attrib["true_phot_phi"] = phot.vec.Phi()
-        self.hepmc_attrib["true_phot_E"] = phot.vec.E()
-        self.hepmc_attrib["true_el_theta"] = electron.vec.Theta()
-        self.hepmc_attrib["true_el_phi"] = electron.vec.Phi()
-        self.hepmc_attrib["true_el_E"] = electron.vec.E()
+            #photon and electron kinematics
+            self.tree_out.true_phot_theta = phot.vec.Theta()
+            self.tree_out.true_phot_phi = phot.vec.Phi()
+            self.tree_out.true_phot_en = phot.vec.E()
+            self.tree_out.true_phot_px = phot.vec.Px()
+            self.tree_out.true_phot_py = phot.vec.Py()
+            self.tree_out.true_phot_pz = phot.vec.Pz()
+            self.tree_out.true_el_theta = electron.vec.Theta()
+            self.tree_out.true_el_phi = electron.vec.Phi()
+            self.tree_out.true_el_en = electron.vec.E()
+            self.tree_out.true_el_px = electron.vec.Px()
+            self.tree_out.true_el_py = electron.vec.Py()
+            self.tree_out.true_el_pz = electron.vec.Pz()
 
+            #kinematics in hepmc attributes
+            self.hepmc_attrib["true_phot_theta"] = phot.vec.Theta()
+            self.hepmc_attrib["true_phot_phi"] = phot.vec.Phi()
+            self.hepmc_attrib["true_phot_en"] = phot.vec.E()
+            self.hepmc_attrib["true_el_theta"] = electron.vec.Theta()
+            self.hepmc_attrib["true_el_phi"] = electron.vec.Phi()
+            self.hepmc_attrib["true_el_en"] = electron.vec.E()
+
+        #beam effects for the photon and electron (local when as background)
+        if self.beff is not None:
+            self.beff.apply((phot, electron))
 
     #_____________________________________________________________________________
     class eq_93p16_foam:
@@ -268,6 +291,18 @@ class gen_Lifshitz_bx:
         pois.GetRandom() # some initialization in TF1 happens here
 
         return pois
+
+    #_____________________________________________________________________________
+    def finish(self):
+
+        foam_int = c_double(0)
+        foam_int_err = c_double(0)
+        self.foam.Finalize(foam_int, foam_int_err)
+
+        sig = foam_int.value*self.dmax_n*(self.Ee_n-self.emin_n)
+        sig_err = foam_int_err.value*self.dmax_n*(self.Ee_n-self.emin_n)
+
+        print("Total cross section (mb):", sig, "+/-", sig_err)
 
     #_____________________________________________________________________________
     def set_tree(self, tree, tlist):
