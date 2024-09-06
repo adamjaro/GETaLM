@@ -226,9 +226,15 @@ class gen_Lifshitz_bx:
             self.hepmc_attrib["true_phot_theta"] = phot.vec.Theta()
             self.hepmc_attrib["true_phot_phi"] = phot.vec.Phi()
             self.hepmc_attrib["true_phot_en"] = phot.vec.E()
+            self.hepmc_attrib["true_phot_px"] = phot.vec.Px()
+            self.hepmc_attrib["true_phot_py"] = phot.vec.Py()
+            self.hepmc_attrib["true_phot_pz"] = phot.vec.Pz()
             self.hepmc_attrib["true_el_theta"] = electron.vec.Theta()
             self.hepmc_attrib["true_el_phi"] = electron.vec.Phi()
             self.hepmc_attrib["true_el_en"] = electron.vec.E()
+            self.hepmc_attrib["true_el_px"] = electron.vec.Px()
+            self.hepmc_attrib["true_el_py"] = electron.vec.Py()
+            self.hepmc_attrib["true_el_pz"] = electron.vec.Pz()
 
         #beam effects for the photon and electron (local when as background)
         if self.beff is not None:

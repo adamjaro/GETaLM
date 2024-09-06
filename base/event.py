@@ -43,7 +43,7 @@ class event:
         if model == "h1":
             self.gen = gen_h1(parse)
         elif model == "zeus":
-            self.gen = gen_zeus(parse, self.out.ltree)
+            self.gen = gen_zeus(parse, self.out.ltree, self.out.hepmc_attrib)
         elif model == "quasi-real":
             self.gen = gen_quasi_real(parse, self.out.ltree, self.out.hepmc_attrib)
         elif model == "electron-beam":
@@ -67,7 +67,7 @@ class event:
         #beam effects
         self.beff = None
         if parse.has_section("beam_effects") == True:
-            self.beff = beam_effects(parse, self.out.ltree)
+            self.beff = beam_effects(parse, self.out.ltree, "beam_effects", self.out.hepmc_attrib)
 
         #tracks in the event
         self.tracks = []

@@ -11,7 +11,7 @@ class gen_zeus:
     #Bethe-Heitler bremsstrahlung photon according to ZEUS
     #Eur. Phys. J. C (2011) 71: 1574
     #_____________________________________________________________________________
-    def __init__(self, parse, tree=None):
+    def __init__(self, parse, tree, hepmc_attrib):
 
         #electron beam, GeV
         self.Ee = parse.getfloat("main", "Ee")
@@ -61,6 +61,9 @@ class gen_zeus:
         tlist += ["true_el_en", "true_el_theta", "true_el_phi"]
         tlist += ["true_el_px", "true_el_py", "true_el_pz"]
         self.tree_out = self.set_tree(tree, tlist)
+
+        #event attributes for hepmc
+        self.hepmc_attrib = hepmc_attrib
 
         print("ZEUS parametrization initialized")
         print("Total cross section: "+str(self.dSigDe.Integral(self.emin, self.Ee))+" mb")
@@ -139,6 +142,20 @@ class gen_zeus:
         self.tree_out.true_el_px = electron.vec.Px()
         self.tree_out.true_el_py = electron.vec.Py()
         self.tree_out.true_el_pz = electron.vec.Pz()
+
+        #photon and electron kinematics in hepmc attributes
+        self.hepmc_attrib["true_phot_theta"] = phot.vec.Theta()
+        self.hepmc_attrib["true_phot_phi"] = phot.vec.Phi()
+        self.hepmc_attrib["true_phot_en"] = phot.vec.E()
+        self.hepmc_attrib["true_phot_px"] = phot.vec.Px()
+        self.hepmc_attrib["true_phot_py"] = phot.vec.Py()
+        self.hepmc_attrib["true_phot_pz"] = phot.vec.Pz()
+        self.hepmc_attrib["true_el_theta"] = electron.vec.Theta()
+        self.hepmc_attrib["true_el_phi"] = electron.vec.Phi()
+        self.hepmc_attrib["true_el_en"] = electron.vec.E()
+        self.hepmc_attrib["true_el_px"] = electron.vec.Px()
+        self.hepmc_attrib["true_el_py"] = electron.vec.Py()
+        self.hepmc_attrib["true_el_pz"] = electron.vec.Pz()
 
     #_____________________________________________________________________________
     def set_tree(self, tree, tlist):

@@ -8,7 +8,7 @@ from ROOT import TF1, gROOT, addressof
 class beam_effects:
     #angular divergence and emittance
     #_____________________________________________________________________________
-    def __init__(self, parse, tree=None, section="beam_effects"):
+    def __init__(self, parse, tree=None, section="beam_effects", hepmc_attrib=None):
 
         # flag to use or not use the beam effects
         self.use_beam_effects = False
@@ -52,6 +52,9 @@ class beam_effects:
         tlist += ["beff_el_en", "beff_el_theta", "beff_el_phi"]
         tlist += ["beff_el_px", "beff_el_py", "beff_el_pz"]
         self.tree_out = self.set_tree(tree, tlist)
+
+        #event attributes for hepmc
+        self.hepmc_attrib = hepmc_attrib
 
     #_____________________________________________________________________________
     def apply(self, tracks):
@@ -116,6 +119,29 @@ class beam_effects:
                     self.tree_out.beff_el_px = i.vec.Px()
                     self.tree_out.beff_el_py = i.vec.Py()
                     self.tree_out.beff_el_pz = i.vec.Pz()
+
+            #particle kinematics in hepmc output
+            if self.hepmc_attrib is not None:
+
+                #photon
+                if i.pdg == 22:
+
+                    self.hepmc_attrib["beff_phot_en"] = i.vec.Energy()
+                    self.hepmc_attrib["beff_phot_theta"] = i.vec.Theta()
+                    self.hepmc_attrib["beff_phot_phi"] = i.vec.Phi()
+                    self.hepmc_attrib["beff_phot_px"] = i.vec.Px()
+                    self.hepmc_attrib["beff_phot_py"] = i.vec.Py()
+                    self.hepmc_attrib["beff_phot_pz"] = i.vec.Pz()
+
+                #electron
+                if i.pdg == 11:
+
+                    self.hepmc_attrib["beff_el_en"] = i.vec.Energy()
+                    self.hepmc_attrib["beff_el_theta"] = i.vec.Theta()
+                    self.hepmc_attrib["beff_el_phi"] = i.vec.Phi()
+                    self.hepmc_attrib["beff_el_px"] = i.vec.Px()
+                    self.hepmc_attrib["beff_el_py"] = i.vec.Py()
+                    self.hepmc_attrib["beff_el_pz"] = i.vec.Pz()
 
     #_____________________________________________________________________________
     def make_gaus(self, name, sig):
