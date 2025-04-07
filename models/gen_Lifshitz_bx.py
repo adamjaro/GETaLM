@@ -23,11 +23,10 @@ class gen_Lifshitz_bx:
     def __init__(self, parse, tree, hepmc_attrib):
 
         #electron and proton beam energy, GeV
+        #electron beam energy, GeV
         self.Ee = parse.getfloat("main", "Ee")
-        Ep = parse.getfloat("main", "Ep")
 
         print("Ee (GeV):", self.Ee)
-        print("Ep (GeV):", Ep)
 
         #A and Z of the nucleus
         nA = 1
@@ -38,6 +37,18 @@ class gen_Lifshitz_bx:
             self.Z = parse.getint("main", "Z")
         print("A:", nA)
         print("Z:", self.Z)
+
+        #nuclear/proton beam energy (GeV)
+        Ep = 0.
+        if parse.has_option("main", "En"):
+            nuclE = parse.getint("main", "En")
+            print("En (GeV):", nuclE)
+            Ep = nuclE*nA/self.Z
+
+        if parse.has_option("main", "Ep"):
+            Ep = parse.getfloat("main", "Ep")
+
+        print("Ep (GeV):", Ep)
 
         #alpha r_e^2
         self.ar2 = 7.297*2.818*2.818*1e-2 # m barn
@@ -52,11 +63,13 @@ class gen_Lifshitz_bx:
         pz_a = TMath.Sqrt(Ep**2-mp**2)*self.Z
         en_a = TMath.Sqrt(pz_a**2 + mn**2)
         nvec.SetPxPyPzE(0, 0, pz_a, en_a)
+        print("gamma_A:", nvec.Gamma())
         self.nboost = nvec.BoostVector()
 
         #electron beam energy in nucleus beam rest frame
         evec = TLorentzVector()
         evec.SetPxPyPzE(0, 0, -TMath.Sqrt(self.Ee**2-self.me**2), self.Ee)
+        print("gamma_e:", evec.Gamma())
         evec.Boost(-self.nboost.x(), -self.nboost.y(), -self.nboost.z())
         self.Ee_n = evec.E()
         print("Ee_n (GeV):", self.Ee_n)
