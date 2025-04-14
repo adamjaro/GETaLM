@@ -12,7 +12,7 @@ class beam_effects:
 
         # flag to use or not use the beam effects
         self.use_beam_effects = False
-        if parse.has_section(section) == True:
+        if parse.has_section(section) == True and parse.has_option(section, "use_beam_effects"):
             self.use_beam_effects = parse.getboolean(section, "use_beam_effects")
 
         print("Beam effects configuration in:", section)
