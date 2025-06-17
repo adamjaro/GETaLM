@@ -36,7 +36,7 @@ class beam_effects:
         self.vtx_z = self.make_gaus("vtx_z", sig_z)
         
         #bunch length along z
-        sig_t = parse.getfloat(section, "sig_t")
+        self.sig_t = parse.getfloat(section, "sig_t")
         print("sig_t =", sig_t)
         self.vtx_t = self.make_gaus("vtx_t", sig_t)
 
@@ -68,7 +68,10 @@ class beam_effects:
         ypos = self.vtx_y.GetRandom()
         zpos = self.vtx_z.GetRandom()
 
-        time = -zpos/self.speed_of_light+self.vtx_t.GetRandom()
+        if(self.sig_t>=0):
+            time = -zpos/self.speed_of_light+self.vtx_t.GetRandom()
+        else:
+            time = 0
                 
         #angular divergence in x and y
         tx = self.div_x.GetRandom()
