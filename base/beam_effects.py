@@ -37,8 +37,8 @@ class beam_effects:
         
         #bunch length along z
         self.sig_t = parse.getfloat(section, "sig_t")
-        print("sig_t =", sig_t)
-        self.vtx_t = self.make_gaus("vtx_t", sig_t)
+        print("sig_t =", self.sig_t)
+        self.vtx_t = self.make_gaus("vtx_t", self.sig_t)
 
         #angular divergence in x, horizontal, rad
         theta_x = parse.getfloat(section, "theta_x")
