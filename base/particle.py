@@ -11,7 +11,7 @@ class particle:
         self.vec = TLorentzVector()
         #index in particle list
         self.idx = 0
-        #status code 1=decay to be tracked, 3=beam particle
+        #status code 1=decay to be tracked, 4=beam particle
         self.stat = 1
         #pdg code
         self.pdg = pdg

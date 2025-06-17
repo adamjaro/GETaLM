@@ -15,7 +15,7 @@ class beam(particle):
         particle.__init__(self, pdg)
         self.pdg = pdg
         #status code for beam particles
-        self.stat = 201
+        self.stat = 4
         #set kinematics for beam particle
         m = TDatabasePDG.Instance().GetParticle(pdg).Mass()
         pz = zsign*sqrt( en**2 - m**2 )
