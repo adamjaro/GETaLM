@@ -2,17 +2,17 @@
 import configparser
 
 import ROOT as rt
-from ROOT import TF1, gROOT, AddressOf
+from ROOT import TF1, gROOT, addressof
 
 #_____________________________________________________________________________
 class beam_effects:
     #angular divergence and emittance
     #_____________________________________________________________________________
-    def __init__(self, parse, tree=None, section="beam_effects"):
+    def __init__(self, parse, tree=None, section="beam_effects", hepmc_attrib=None):
 
         # flag to use or not use the beam effects
         self.use_beam_effects = False
-        if parse.has_section(section) == True:
+        if parse.has_section(section) == True and parse.has_option(section, "use_beam_effects"):
             self.use_beam_effects = parse.getboolean(section, "use_beam_effects")
 
         print("Beam effects configuration in:", section)
@@ -51,11 +51,17 @@ class beam_effects:
         self.div_y = self.make_gaus("div_y", theta_y)
 
         #tree output from beam effects
-        tlist = ["beff_vx", "beff_vy", "beff_vz", "beff_vt", "beff_tx", "beff_ty"]
+        tlist =  ["beff_vx", "beff_vy", "beff_vz", "beff_vt", "beff_tx", "beff_ty"]
+        tlist += ["beff_phot_en", "beff_phot_theta", "beff_phot_phi"]
+        tlist += ["beff_phot_px", "beff_phot_py", "beff_phot_pz"]
+        tlist += ["beff_el_en", "beff_el_theta", "beff_el_phi"]
+        tlist += ["beff_el_px", "beff_el_py", "beff_el_pz"]
         self.tree_out = self.set_tree(tree, tlist)
 
         self.speed_of_light = 299.792
-        
+
+        #event attributes for hepmc
+        self.hepmc_attrib = hepmc_attrib
 
     #_____________________________________________________________________________
     def apply(self, tracks):
@@ -77,6 +83,16 @@ class beam_effects:
         tx = self.div_x.GetRandom()
         ty = self.div_y.GetRandom()
 
+        #beam size and divergence in output tree
+        if self.tree_out is not None:
+
+            self.tree_out.beff_vx = xpos
+            self.tree_out.beff_vy = ypos
+            self.tree_out.beff_vz = zpos
+
+            self.tree_out.beff_tx = tx
+            self.tree_out.beff_ty = ty
+
         #apply to the final particles
         for i in tracks:
             #select only final particles
@@ -95,15 +111,56 @@ class beam_effects:
             #divergence in y by rotation along x
             i.vec.RotateX(ty)
 
-        if self.tree_out is not None:
+            #particle kinematics in output tree
+            if self.tree_out is not None:
 
             self.tree_out.beff_vx = xpos
             self.tree_out.beff_vy = ypos
             self.tree_out.beff_vz = zpos
             self.tree_out.beff_vt = time
+            
+                #photon
+                if i.pdg == 22:
 
-            self.tree_out.beff_tx = tx
-            self.tree_out.beff_ty = ty
+                    self.tree_out.beff_phot_en    = i.vec.Energy()
+                    self.tree_out.beff_phot_theta = i.vec.Theta()
+                    self.tree_out.beff_phot_phi   = i.vec.Phi()
+                    self.tree_out.beff_phot_px = i.vec.Px()
+                    self.tree_out.beff_phot_py = i.vec.Py()
+                    self.tree_out.beff_phot_pz = i.vec.Pz()
+
+                #electron
+                if i.pdg == 11:
+
+                    self.tree_out.beff_el_en    = i.vec.Energy()
+                    self.tree_out.beff_el_theta = i.vec.Theta()
+                    self.tree_out.beff_el_phi   = i.vec.Phi()
+                    self.tree_out.beff_el_px = i.vec.Px()
+                    self.tree_out.beff_el_py = i.vec.Py()
+                    self.tree_out.beff_el_pz = i.vec.Pz()
+
+            #particle kinematics in hepmc output
+            if self.hepmc_attrib is not None:
+
+                #photon
+                if i.pdg == 22:
+
+                    self.hepmc_attrib["beff_phot_en"] = i.vec.Energy()
+                    self.hepmc_attrib["beff_phot_theta"] = i.vec.Theta()
+                    self.hepmc_attrib["beff_phot_phi"] = i.vec.Phi()
+                    self.hepmc_attrib["beff_phot_px"] = i.vec.Px()
+                    self.hepmc_attrib["beff_phot_py"] = i.vec.Py()
+                    self.hepmc_attrib["beff_phot_pz"] = i.vec.Pz()
+
+                #electron
+                if i.pdg == 11:
+
+                    self.hepmc_attrib["beff_el_en"] = i.vec.Energy()
+                    self.hepmc_attrib["beff_el_theta"] = i.vec.Theta()
+                    self.hepmc_attrib["beff_el_phi"] = i.vec.Phi()
+                    self.hepmc_attrib["beff_el_px"] = i.vec.Px()
+                    self.hepmc_attrib["beff_el_py"] = i.vec.Py()
+                    self.hepmc_attrib["beff_el_pz"] = i.vec.Pz()
 
             
     #_____________________________________________________________________________
@@ -135,7 +192,7 @@ class beam_effects:
 
         #add variables to the tree
         for i in tlist:
-            tree.Branch(i, AddressOf(tree_out, i), i+"/D")
+            tree.Branch(i, addressof(tree_out, i), i+"/D")
 
         return tree_out
 

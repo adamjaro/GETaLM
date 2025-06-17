@@ -50,21 +50,7 @@ class gen_beam_gas:
 
         print("dmax:", self.dmax)
 
-        #cross section formula
-        #self.eqpar = self.eq_93p16(self)
-        #self.dSigDwDt = TF2("dSigDwDt", self.eqpar, self.emin, self.Ee, 0, self.dmax)
-        #self.dSigDwDt.SetNpx(2000)
-        #self.dSigDwDt.SetNpy(2000)
-        #self.dSigDwDt.SetNpx(100)
-        #self.dSigDwDt.SetNpy(100)
-        #gRandom.SetSeed(5572323)
-
-        #total integrated cross section over all delta (to 1e5)
-        #dSigInt = TF2("dSigInt", self.eqpar, self.emin, self.Ee, 0, 1e5)
-        #sigma_tot = dSigInt.Integral(self.emin, self.Ee, 0, 1e5)
-        #print("Total cross section, mb:", sigma_tot)
-
-        #FOAM integration
+        #cross section formula, FOAM integration
         self.eq_foam = self.eq_93p16_foam(self)
         self.rand_foam = TRandom3()
         self.rand_foam.SetSeed(123)
@@ -102,24 +88,21 @@ class gen_beam_gas:
 
         #tree output from the generator
         tlist = ["true_phot_w", "true_phot_delta"]
-        tlist += ["true_phot_theta", "true_phot_phi", "true_phot_E"]
+        tlist += ["true_phot_theta", "true_phot_phi", "true_phot_en"]
+        tlist += ["true_el_theta", "true_el_phi", "true_el_en"]
+        tlist += ["true_phot_px", "true_phot_py", "true_phot_pz"]
+        tlist += ["true_el_px", "true_el_py", "true_el_pz"]
         tlist += ["vtx_x", "vtx_y", "vtx_z", "divx", "divy"]
+        tlist += ["div_phot_en", "div_phot_theta", "div_phot_phi"]
+        tlist += ["div_el_en", "div_el_theta", "div_el_phi"]
+        tlist += ["div_phot_px", "div_phot_py", "div_phot_pz"]
+        tlist += ["div_el_px", "div_el_py", "div_el_pz"]
         self.tree_out = self.set_tree(tree, tlist)
 
         print("Beam-gas generator initialized")
 
     #_____________________________________________________________________________
     def generate(self, add_particle):
-
-        #return
-
-        #photon energy and delta in nucleus rest frame
-        #w = c_double(0)
-        #d = c_double(0)
-        #self.dSigDwDt.GetRandom2(w, d)
-
-        #w = w.value
-        #d = d.value
 
         #photon energy and delta in nucleus rest frame by FOAM
         wdvec = std.vector("double")(2)
@@ -151,17 +134,30 @@ class gen_beam_gas:
 
         phot.vec.SetPxPyPzE(px, py, -pz, w)
 
-        #photon kinematics in generator output
-        self.tree_out.true_phot_theta = phot.vec.Theta()
-        self.tree_out.true_phot_phi = phot.vec.Phi()
-        self.tree_out.true_phot_E = phot.vec.E()
-
         #scattered electron, initialize as beam and constrain with the photon
         electron = add_particle( beam(self.Ee, 11, -1) )
         electron.stat = 1
         electron.pxyze_prec = 9
 
         electron.vec -= phot.vec
+
+        #photon and electron kinematics in generator output
+        self.tree_out.true_phot_theta = phot.vec.Theta()
+        self.tree_out.true_phot_phi = phot.vec.Phi()
+        self.tree_out.true_phot_en = phot.vec.E()
+
+        self.tree_out.true_el_en = electron.vec.E()
+        self.tree_out.true_el_theta = electron.vec.Theta()
+        self.tree_out.true_el_phi = electron.vec.Phi()
+
+        #momenta in x, y and z
+        self.tree_out.true_phot_px = phot.vec.Px()
+        self.tree_out.true_phot_py = phot.vec.Py()
+        self.tree_out.true_phot_pz = phot.vec.Pz()
+
+        self.tree_out.true_el_px = electron.vec.Px()
+        self.tree_out.true_el_py = electron.vec.Py()
+        self.tree_out.true_el_pz = electron.vec.Pz()
 
         #z-vertex from the pressure
         zpos = self.pressure_func.GetRandom()
@@ -189,6 +185,23 @@ class gen_beam_gas:
         #divergence in y by rotation along x
         phot.vec.RotateX(divy)
         electron.vec.RotateX(divy)
+
+        #photon and electron kinematics after beam effects
+        self.tree_out.div_phot_en = phot.vec.Energy()
+        self.tree_out.div_phot_theta = phot.vec.Theta()
+        self.tree_out.div_phot_phi = phot.vec.Phi()
+        self.tree_out.div_el_en = electron.vec.Energy()
+        self.tree_out.div_el_theta = electron.vec.Theta()
+        self.tree_out.div_el_phi = electron.vec.Phi()
+
+        #momenta in x, y, z after beam effects
+        self.tree_out.div_phot_px = phot.vec.Px()
+        self.tree_out.div_phot_py = phot.vec.Py()
+        self.tree_out.div_phot_pz = phot.vec.Pz()
+
+        self.tree_out.div_el_px = electron.vec.Px()
+        self.tree_out.div_el_py = electron.vec.Py()
+        self.tree_out.div_el_pz = electron.vec.Pz()
 
     #_____________________________________________________________________________
     class eq_93p16:
