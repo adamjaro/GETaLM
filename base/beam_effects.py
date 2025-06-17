@@ -114,11 +114,11 @@ class beam_effects:
             #particle kinematics in output tree
             if self.tree_out is not None:
 
-            self.tree_out.beff_vx = xpos
-            self.tree_out.beff_vy = ypos
-            self.tree_out.beff_vz = zpos
-            self.tree_out.beff_vt = time
-            
+                self.tree_out.beff_vx = xpos
+                self.tree_out.beff_vy = ypos
+                self.tree_out.beff_vz = zpos
+                self.tree_out.beff_vt = time
+
                 #photon
                 if i.pdg == 22:
 
