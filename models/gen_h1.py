@@ -41,6 +41,7 @@ class gen_h1:
         self.eq1par = self.eq1(self)
         self.dSigDy = TF1("dSigDy", self.eq1par, self.emin/self.Ee, 1)
         tmax = 1.5e-3 #maximal photon angle
+        self.theta_const = 1e-9 # constant term in theta formula
         self.eq3par = self.eq3(self)
         self.dSigDtheta = TF1("dSigDtheta", self.eq3par, 0, tmax)
 
@@ -99,7 +100,7 @@ class gen_h1:
             #formula for angular distribution
 
             t = x[0] # rad
-            return 1e-9 * t/( ((self.gen.me/self.gen.Ee)**2 + t*t)**2 )
+            return self.gen.theta_const * t/( ((self.gen.me/self.gen.Ee)**2 + t*t)**2 )
 
 
 
