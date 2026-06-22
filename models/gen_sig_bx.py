@@ -50,23 +50,3 @@ class gen_sig_bx:
         self.sig_particles.append(particle)
 
         return particle
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

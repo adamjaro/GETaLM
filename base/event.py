@@ -75,6 +75,12 @@ class event:
         #run
         nev = parse.getint("main", "nev") # number of events to generate
         print("Number of events:", nev)
+        
+        # Set run attributes
+        self.out.set_run_attribute("nEvents", nev)
+        if hasattr(self.gen, 'sigma_tot'):
+            self.out.set_run_attribute("crossSection", self.gen.sigma_tot)
+            
         self.event_loop(nev)
 
     #_____________________________________________________________________________
@@ -117,6 +123,10 @@ class event:
 
         #keep track of particle index in event
         part.idx = len(self.tracks)+1
+        #part.vx = 0.0
+        #part.vy = 0.0
+        #part.vz = 0.0
+        #part.vt = 0.0
         self.tracks.append(part)
 
         return part

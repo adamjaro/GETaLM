@@ -8,12 +8,21 @@ import ROOT as rt
 from ROOT import TRandom3, gROOT, addressof, TDatabasePDG, TMath
 
 from particle import particle
+from beam import beam
 
 #_____________________________________________________________________________
 class gen_uniform:
     #_____________________________________________________________________________
     def __init__(self, parse, tree, hepmc_attrib):
 
+        print("Uniform configuration:")
+        
+        #electron and proton beam energy, GeV
+        self.Ee = parse.getfloat("main", "Ee")
+        self.Ep = parse.getfloat("main", "Ep")
+        print("Ee =", self.Ee, "GeV")
+        print("Ep =", self.Ep, "GeV")
+        
         #minumum and maximum energy, GeV
         self.emin = parse.getfloat("main", "emin")
         self.emax = parse.getfloat("main", "emax")
@@ -155,9 +164,20 @@ class gen_uniform:
     #_____________________________________________________________________________
     def generate(self, add_particle):
 
+        #beam electron
+        ebeam = add_particle( beam(self.Ee, 11, -1) )
+        ebeam.stat = 4
+        ebeam.pxyze_prec = 9
+        
+        #beam proton
+        pbeam = add_particle( beam(self.Ep, 2212, 1) )
+        pbeam.stat = 4
+        pbeam.pxyze_prec = 9
+
         #generator for a given pdg
 
         self.gen_func[self.pdg](add_particle)
+        
 
 
     #_____________________________________________________________________________

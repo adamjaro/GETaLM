@@ -50,7 +50,8 @@ class gen_h1:
         self.rand.SetSeed(5572323)
 
         print("H1 parametrization initialized")
-        print("Total cross section: "+str(self.dSigDy.Integral(self.emin/self.Ee, 1))+" mb")
+        self.sigma_tot = self.dSigDy.Integral(self.emin/self.Ee, 1)
+        print("Total cross section: "+str(self.sigma_tot)+" mb")
 
     #_____________________________________________________________________________
     def generate(self, add_particle):

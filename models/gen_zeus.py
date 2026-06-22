@@ -66,7 +66,8 @@ class gen_zeus:
         self.hepmc_attrib = hepmc_attrib
 
         print("ZEUS parametrization initialized")
-        print("Total cross section: "+str(self.dSigDe.Integral(self.emin, self.Ee))+" mb")
+        self.sigma_tot = self.dSigDe.Integral(self.emin, self.Ee)
+        print("Total cross section: "+str(self.sigma_tot)+" mb")
 
     #_____________________________________________________________________________
     class eq1:
@@ -104,6 +105,16 @@ class gen_zeus:
     #_____________________________________________________________________________
     def generate(self, add_particle):
 
+        #initialize the scattered electron as a beam electron
+        ebeam = add_particle( beam(self.Ee, 11, -1) )
+        ebeam.stat = 4
+        ebeam.pxyze_prec = 9
+        
+        #beam proton
+        pbeam = add_particle( beam(self.Ep, 2212, 1) )
+        pbeam.stat = 4
+        pbeam.pxyze_prec = 9
+        
         #initialize the scattered electron as a beam electron
         electron = add_particle( beam(self.Ee, 11, -1) )
         electron.stat = 1

@@ -112,10 +112,10 @@ class gen_Lifshitz_bx:
         self.foam.GetIntegMC(foam_int[0], foam_int[1])
 
         #total cross section (mb)
-        sigma_tot = foam_int[0].value*self.dmax_n*(self.Ee_n-self.emin_n)
+        self.sigma_tot = foam_int[0].value*self.dmax_n*(self.Ee_n-self.emin_n)
         sigma_tot_err = foam_int[1].value*self.dmax_n*(self.Ee_n-self.emin_n)
 
-        print("Total cross section (mb):", sigma_tot, "+/-", sigma_tot_err)
+        print("Total cross section (mb):", self.sigma_tot, "+/-", sigma_tot_err)
 
         #uniform generator for azimuthal angles
         self.rand = TRandom3()
@@ -128,7 +128,7 @@ class gen_Lifshitz_bx:
         print("nbunch:", self.nbunch)
         #nbunch = 0 sets for single interaction simulated per event
         if self.nbunch > 1:
-            self.pois = self.make_pois(parse, self.nbunch, sigma_tot)
+            self.pois = self.make_pois(parse, self.nbunch, self.sigma_tot)
 
         #tree output from the generator
         if self.nbunch == 0:
@@ -188,6 +188,7 @@ class gen_Lifshitz_bx:
         phot.stat = 1
         phot.vtx_id = ivtx
         phot.pxyze_prec = 9
+        phot.vid = 2
 
         #set the photon vector in nucleus rest frame
         px_n = w*TMath.Sin(theta_n)*TMath.Cos(phi_n)
@@ -206,6 +207,7 @@ class gen_Lifshitz_bx:
         electron.stat = 1
         electron.vtx_id = ivtx
         electron.pxyze_prec = 9
+        electron.vid = 2
 
         #constrain the scattered electron with the photon
         electron.vec -= phot.vec
@@ -214,40 +216,40 @@ class gen_Lifshitz_bx:
         if self.nbunch == 0:
 
             #cross section formula
-            self.tree_out.true_phot_w = w
-            self.tree_out.true_phot_delta = d
-            self.tree_out.true_phot_theta_n = theta_n
-            self.hepmc_attrib["true_phot_w"] = w
-            self.hepmc_attrib["true_phot_delta"] = d
+            self.tree_out.true_phot_w              = w
+            self.tree_out.true_phot_delta          = d
+            self.tree_out.true_phot_theta_n        = theta_n
+            self.hepmc_attrib["true_phot_w"]       = w
+            self.hepmc_attrib["true_phot_delta"]   = d
             self.hepmc_attrib["true_phot_theta_n"] = theta_n
 
             #photon and electron kinematics
             self.tree_out.true_phot_theta = phot.vec.Theta()
-            self.tree_out.true_phot_phi = phot.vec.Phi()
-            self.tree_out.true_phot_en = phot.vec.E()
-            self.tree_out.true_phot_px = phot.vec.Px()
-            self.tree_out.true_phot_py = phot.vec.Py()
-            self.tree_out.true_phot_pz = phot.vec.Pz()
-            self.tree_out.true_el_theta = electron.vec.Theta()
-            self.tree_out.true_el_phi = electron.vec.Phi()
-            self.tree_out.true_el_en = electron.vec.E()
-            self.tree_out.true_el_px = electron.vec.Px()
-            self.tree_out.true_el_py = electron.vec.Py()
-            self.tree_out.true_el_pz = electron.vec.Pz()
+            self.tree_out.true_phot_phi   = phot.vec.Phi()
+            self.tree_out.true_phot_en    = phot.vec.E()
+            self.tree_out.true_phot_px    = phot.vec.Px()
+            self.tree_out.true_phot_py    = phot.vec.Py()
+            self.tree_out.true_phot_pz    = phot.vec.Pz()
+            self.tree_out.true_el_theta   = electron.vec.Theta()
+            self.tree_out.true_el_phi     = electron.vec.Phi()
+            self.tree_out.true_el_en      = electron.vec.E()
+            self.tree_out.true_el_px      = electron.vec.Px()
+            self.tree_out.true_el_py      = electron.vec.Py()
+            self.tree_out.true_el_pz      = electron.vec.Pz()
 
             #kinematics in hepmc attributes
             self.hepmc_attrib["true_phot_theta"] = phot.vec.Theta()
-            self.hepmc_attrib["true_phot_phi"] = phot.vec.Phi()
-            self.hepmc_attrib["true_phot_en"] = phot.vec.E()
-            self.hepmc_attrib["true_phot_px"] = phot.vec.Px()
-            self.hepmc_attrib["true_phot_py"] = phot.vec.Py()
-            self.hepmc_attrib["true_phot_pz"] = phot.vec.Pz()
-            self.hepmc_attrib["true_el_theta"] = electron.vec.Theta()
-            self.hepmc_attrib["true_el_phi"] = electron.vec.Phi()
-            self.hepmc_attrib["true_el_en"] = electron.vec.E()
-            self.hepmc_attrib["true_el_px"] = electron.vec.Px()
-            self.hepmc_attrib["true_el_py"] = electron.vec.Py()
-            self.hepmc_attrib["true_el_pz"] = electron.vec.Pz()
+            self.hepmc_attrib["true_phot_phi"]   = phot.vec.Phi()
+            self.hepmc_attrib["true_phot_en"]    = phot.vec.E()
+            self.hepmc_attrib["true_phot_px"]    = phot.vec.Px()
+            self.hepmc_attrib["true_phot_py"]    = phot.vec.Py()
+            self.hepmc_attrib["true_phot_pz"]    = phot.vec.Pz()
+            self.hepmc_attrib["true_el_theta"]   = electron.vec.Theta()
+            self.hepmc_attrib["true_el_phi"]     = electron.vec.Phi()
+            self.hepmc_attrib["true_el_en"]      = electron.vec.E()
+            self.hepmc_attrib["true_el_px"]      = electron.vec.Px()
+            self.hepmc_attrib["true_el_py"]      = electron.vec.Py()
+            self.hepmc_attrib["true_el_pz"]      = electron.vec.Pz()
 
         #beam effects for the photon and electron (local when as background)
         if self.beff is not None:

@@ -34,6 +34,11 @@ class beam_effects:
         sig_z = parse.getfloat(section, "sig_z")
         print("sig_z =", sig_z)
         self.vtx_z = self.make_gaus("vtx_z", sig_z)
+        
+        #bunch length along z
+        self.sig_t = parse.getfloat(section, "sig_t")
+        print("sig_t =", self.sig_t)
+        self.vtx_t = self.make_gaus("vtx_t", self.sig_t)
 
         #angular divergence in x, horizontal, rad
         theta_x = parse.getfloat(section, "theta_x")
@@ -46,12 +51,14 @@ class beam_effects:
         self.div_y = self.make_gaus("div_y", theta_y)
 
         #tree output from beam effects
-        tlist = ["beff_vx", "beff_vy", "beff_vz", "beff_tx", "beff_ty"]
+        tlist =  ["beff_vx", "beff_vy", "beff_vz", "beff_vt", "beff_tx", "beff_ty"]
         tlist += ["beff_phot_en", "beff_phot_theta", "beff_phot_phi"]
         tlist += ["beff_phot_px", "beff_phot_py", "beff_phot_pz"]
         tlist += ["beff_el_en", "beff_el_theta", "beff_el_phi"]
         tlist += ["beff_el_px", "beff_el_py", "beff_el_pz"]
         self.tree_out = self.set_tree(tree, tlist)
+
+        self.speed_of_light = 299.792
 
         #event attributes for hepmc
         self.hepmc_attrib = hepmc_attrib
@@ -67,6 +74,11 @@ class beam_effects:
         ypos = self.vtx_y.GetRandom()
         zpos = self.vtx_z.GetRandom()
 
+        if(self.sig_t>=0):
+            time = -zpos/self.speed_of_light+self.vtx_t.GetRandom()
+        else:
+            time = 0
+                
         #angular divergence in x and y
         tx = self.div_x.GetRandom()
         ty = self.div_y.GetRandom()
@@ -84,12 +96,14 @@ class beam_effects:
         #apply to the final particles
         for i in tracks:
             #select only final particles
-            if i.stat != 1: continue
+            #if i.stat != 1: continue
 
             #vertex position
             i.vx = xpos
             i.vy = ypos
             i.vz = zpos
+            i.vt = time
+
 
             #divergence in x by rotation along y
             i.vec.RotateY(tx)
@@ -99,6 +113,11 @@ class beam_effects:
 
             #particle kinematics in output tree
             if self.tree_out is not None:
+
+                self.tree_out.beff_vx = xpos
+                self.tree_out.beff_vy = ypos
+                self.tree_out.beff_vz = zpos
+                self.tree_out.beff_vt = time
 
                 #photon
                 if i.pdg == 22:
@@ -143,6 +162,7 @@ class beam_effects:
                     self.hepmc_attrib["beff_el_py"] = i.vec.Py()
                     self.hepmc_attrib["beff_el_pz"] = i.vec.Pz()
 
+            
     #_____________________________________________________________________________
     def make_gaus(self, name, sig):
 
