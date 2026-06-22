@@ -35,9 +35,14 @@ class file_output:
         if self.set_write_root: self.make_root(parse)
 
         self.hepmc_attrib = {}
+        self.hepmc_run_attrib = {}
+        
+        # Store parse config for later HepMC writer creation
+        self.parse = parse
+        self.hepmc_writers_created = False
 
         if (self.set_write_hepmc or self.set_write_hepmc_root):
-            self.make_hepmc(parse)
+            self.prepare_hepmc(parse)
         
 
     #_____________________________________________________________________________
@@ -73,29 +78,18 @@ class file_output:
         atexit.register(self.close_root)
 
     #_____________________________________________________________________________
-    def make_hepmc(self, parse):
+    def prepare_hepmc(self, parse):
 
-        #HepMC3 output
+        #HepMC3 preparation (defer writer creation)
 
         global hepmc
         global hmrootIO
         from pyHepMC3 import HepMC3 as hepmc
         from pyHepMC3.rootIO import HepMC3 as hmrootIO
 
-        if(self.set_write_hepmc):
-            nam = parse.get("main", "nam").strip("\"'") + ".hepmc"
-            print("HepMC3 output name:", nam)        
-
-            self.hepmc_out = hepmc.WriterAscii(nam, hepmc.GenRunInfo())
-
-        if(self.set_write_hepmc_root):
-            nam = parse.get("main", "nam").strip("\"'") + ".hepmc3.tree.root"
-            print("HepMC3 root output name:", nam)
-
-            self.hepmc_root_out = hmrootIO.WriterRootTree(nam)
-
-            atexit.register(self.close_hepmc_root)
-            
+        # Create GenRunInfo but don't create writers yet
+        self.run_info = hepmc.GenRunInfo()
+        
         self.hepmc_ievt = 0
 
         #electron and proton beam energy to create primary vertex
@@ -103,7 +97,41 @@ class file_output:
         self.hepmc_Ep = -1.
         if parse.has_option("main", "Ep"):
             self.hepmc_Ep = parse.getfloat("main", "Ep")
+
+    #_____________________________________________________________________________
+    def set_run_attribute(self, name, value):
+        """Set a run-level attribute"""
+        self.hepmc_run_attrib[name] = value
+        # Don't add to run_info yet - wait until writers are created
             
+
+    #_____________________________________________________________________________
+    def create_hepmc_writers(self):
+        """Create HepMC writers after run attributes have been set"""
+        
+        if self.hepmc_writers_created:
+            return
+            
+        # Add all run attributes to run_info before creating writers
+        for attr_name, attr_value in self.hepmc_run_attrib.items():
+            run_attr = hepmc.DoubleAttribute(attr_value)
+            self.run_info.add_attribute(attr_name, run_attr)
+        
+        if(self.set_write_hepmc):
+            nam = self.parse.get("main", "nam").strip("\"'") + ".hepmc"
+            print("HepMC3 output name:", nam)        
+
+            self.hepmc_out = hepmc.WriterAscii(nam, self.run_info)
+
+        if(self.set_write_hepmc_root):
+            nam = self.parse.get("main", "nam").strip("\"'") + ".hepmc3.tree.root"
+            print("HepMC3 root output name:", nam)
+
+            self.hepmc_root_out = hmrootIO.WriterRootTree(nam, self.run_info)
+
+            atexit.register(self.close_hepmc_root)
+        
+        self.hepmc_writers_created = True
 
     #_____________________________________________________________________________
     def write_tx(self, tracks):
@@ -182,6 +210,11 @@ class file_output:
 
         if not (self.set_write_hepmc or self.set_write_hepmc_root): return
 
+        # Create writers now if not already created (after run attributes are set)
+        if not self.hepmc_writers_created:
+            self.create_hepmc_writers()
+
+        
         #hepmc event
         evt = hepmc.GenEvent(hepmc.Units.GEV, hepmc.Units.MM)
         evt.set_event_number(self.hepmc_ievt);
@@ -192,10 +225,10 @@ class file_output:
             evt.add_attribute(i, attr)
 
         #beam electron and proton as incoming particles to primary vertex
-        beam_el = beam(self.hepmc_Ee, 11, -1)
-        if self.hepmc_Ep > 0:
-            #proton beam only when requested
-            beam_prot = beam(self.hepmc_Ep, 2212, 1)
+        #beam_el = beam(self.hepmc_Ee, 11, -1)
+        #if self.hepmc_Ep > 0:
+        #    #proton beam only when requested
+        #    beam_prot = beam(self.hepmc_Ep, 2212, 1)
 
         #vertices in the event
         vertices = []
@@ -204,7 +237,6 @@ class file_output:
         #tracks loop
         for t in tracks:
             #only final particles
-            #if t.stat != 1: continue
 
             #new primary vertex
             if t.vtx_id != ivtx:
@@ -217,15 +249,19 @@ class file_output:
                 vertices.append(vtx)
 
                 #beam particles in the vertex
-                vtx.add_particle_in( hepmc.GenParticle(hepmc.FourVector(beam_el.vec.Px(),\
-                    beam_el.vec.Py(), beam_el.vec.Pz(), beam_el.vec.E()), beam_el.pdg, 4) )
-                if self.hepmc_Ep > 0:
-                    #proton beam only when requested
-                    vtx.add_particle_in( hepmc.GenParticle(hepmc.FourVector(beam_prot.vec.Px(),\
-                        beam_prot.vec.Py(), beam_prot.vec.Pz(), beam_prot.vec.E()), beam_prot.pdg, 4) )
+                #vtx.add_particle_in( hepmc.GenParticle(hepmc.FourVector(beam_el.vec.Px(),\
+                #    beam_el.vec.Py(), beam_el.vec.Pz(), beam_el.vec.E()), beam_el.pdg, 4) )
+                #if self.hepmc_Ep > 0:
+                #    #proton beam only when requested
+                #    vtx.add_particle_in( hepmc.GenParticle(hepmc.FourVector(beam_prot.vec.Px(),\
+                #        beam_prot.vec.Py(), beam_prot.vec.Pz(), beam_prot.vec.E()), beam_prot.pdg, 4) )
 
             #add particle to the vertex
-            vtx.add_particle_out( t.make_hepmc_particle(hepmc) )
+            if t.stat == 1:
+                vtx.add_particle_out( t.make_hepmc_particle(hepmc) )
+            
+            if t.stat == 4:
+                vtx.add_particle_in( t.make_hepmc_particle(hepmc) )
 
         #vertex loop
         for v in vertices:

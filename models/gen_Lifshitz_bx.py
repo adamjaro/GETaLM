@@ -112,10 +112,10 @@ class gen_Lifshitz_bx:
         self.foam.GetIntegMC(foam_int[0], foam_int[1])
 
         #total cross section (mb)
-        sigma_tot = foam_int[0].value*self.dmax_n*(self.Ee_n-self.emin_n)
+        self.sigma_tot = foam_int[0].value*self.dmax_n*(self.Ee_n-self.emin_n)
         sigma_tot_err = foam_int[1].value*self.dmax_n*(self.Ee_n-self.emin_n)
 
-        print("Total cross section (mb):", sigma_tot, "+/-", sigma_tot_err)
+        print("Total cross section (mb):", self.sigma_tot, "+/-", sigma_tot_err)
 
         #uniform generator for azimuthal angles
         self.rand = TRandom3()
@@ -128,7 +128,7 @@ class gen_Lifshitz_bx:
         print("nbunch:", self.nbunch)
         #nbunch = 0 sets for single interaction simulated per event
         if self.nbunch > 1:
-            self.pois = self.make_pois(parse, self.nbunch, sigma_tot)
+            self.pois = self.make_pois(parse, self.nbunch, self.sigma_tot)
 
         #tree output from the generator
         if self.nbunch == 0:

@@ -66,7 +66,8 @@ class gen_zeus:
         self.hepmc_attrib = hepmc_attrib
 
         print("ZEUS parametrization initialized")
-        print("Total cross section: "+str(self.dSigDe.Integral(self.emin, self.Ee))+" mb")
+        self.sigma_tot = self.dSigDe.Integral(self.emin, self.Ee)
+        print("Total cross section: "+str(self.sigma_tot)+" mb")
 
     #_____________________________________________________________________________
     class eq1:

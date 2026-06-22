@@ -91,9 +91,9 @@ class gen_Lifshitz_93p16:
 
         #total integrated cross section over all delta (to 1e5)
         dSigInt = TF2("dSigInt", self.eqpar, emin_n, self.Ee_n, 0, 1e5)
-        sigma_tot = dSigInt.Integral(emin_n, self.Ee_n, 0, 1e5)
+        self.sigma_tot = dSigInt.Integral(emin_n, self.Ee_n, 0, 1e5)
 
-        print("Total cross section, mb:", sigma_tot)
+        print("Total cross section, mb:", self.sigma_tot)
 
         #uniform generator for azimuthal angles
         self.rand = TRandom3()
